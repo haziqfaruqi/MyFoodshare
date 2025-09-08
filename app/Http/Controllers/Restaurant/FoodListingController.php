@@ -182,4 +182,53 @@ class FoodListingController extends Controller
         return redirect()->route('restaurant.listings.index')
             ->with('success', 'Food listing deleted successfully!');
     }
+
+    public function approveMatch(Request $request, FoodListing $listing, FoodMatch $match)
+    {
+        $this->authorize('view', $listing);
+        
+        // Ensure the match belongs to this listing
+        if ($match->food_listing_id !== $listing->id) {
+            abort(404, 'Match not found for this listing.');
+        }
+
+        $match->confirmPickup();
+
+        return redirect()->back()->with('success', 'Pickup approved! The recipient has been notified.');
+    }
+
+    public function scheduleMatch(Request $request, FoodListing $listing, FoodMatch $match)
+    {
+        $this->authorize('view', $listing);
+        
+        // Ensure the match belongs to this listing
+        if ($match->food_listing_id !== $listing->id) {
+            abort(404, 'Match not found for this listing.');
+        }
+
+        $request->validate([
+            'scheduled_at' => 'required|date|after:now',
+        ]);
+
+        $match->schedulePickup(new \DateTime($request->scheduled_at));
+
+        return redirect()->back()->with('success', 'Pickup scheduled successfully!');
+    }
+
+    public function rejectMatch(Request $request, FoodListing $listing, FoodMatch $match)
+    {
+        $this->authorize('view', $listing);
+        
+        // Ensure the match belongs to this listing
+        if ($match->food_listing_id !== $listing->id) {
+            abort(404, 'Match not found for this listing.');
+        }
+
+        $match->update([
+            'status' => 'rejected',
+            'notes' => $request->get('reason', 'Rejected by donor'),
+        ]);
+
+        return redirect()->back()->with('info', 'Match rejected successfully.');
+    }
 }

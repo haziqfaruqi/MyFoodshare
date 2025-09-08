@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\FoodListing;
 use App\Models\User;
 use App\Models\FoodMatch;
-use App\Notifications\NewFoodMatchNotification;
+use App\Notifications\NewFoodListingNotification;
 use Illuminate\Support\Facades\DB;
 
 class FoodMatchingService
@@ -61,7 +61,7 @@ class FoodMatchingService
                 ]);
 
                 // Send notification to recipient about new food available
-                $recipient->notify(new NewFoodMatchNotification($match, false));
+                $recipient->notify(new NewFoodListingNotification($listing, $recipient->distance));
 
                 $matches[] = $match;
             }

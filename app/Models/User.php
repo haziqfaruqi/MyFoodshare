@@ -39,6 +39,9 @@ class User extends Authenticatable
         'admin_notes',
         'approved_at',
         'approved_by',
+        'fcm_token',
+        'push_notifications_enabled',
+        'notification_preferences',
     ];
 
     protected $hidden = [
@@ -55,6 +58,8 @@ class User extends Authenticatable
             'approved_at' => 'datetime',
             'latitude' => 'decimal:8',
             'longitude' => 'decimal:8',
+            'notification_preferences' => 'json',
+            'push_notifications_enabled' => 'boolean',
         ];
     }
 

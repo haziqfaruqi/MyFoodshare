@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\PendingApprovalController;
 use App\Http\Controllers\Admin\ActiveListingController;
 use App\Http\Controllers\Admin\AnalyticsController;
 use App\Http\Controllers\Admin\ListingApprovalController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\QrVerificationController;
 
 // Public Routes
@@ -40,12 +41,39 @@ Route::post('/register/recipient', [RegisterController::class, 'storeRecipient']
 Route::get('/food-listing/{id}/verify/{code}', [QrVerificationController::class, 'verify'])->name('food-listing.verify');
 Route::get('/food-listing/{listing}/qr', [QrVerificationController::class, 'generateQr'])->name('food-listing.qr');
 
+// Pickup Verification Routes
+Route::get('/pickup/scanner', [App\Http\Controllers\PickupVerificationController::class, 'showScanner'])->name('pickup.scanner');
+Route::get('/pickup/verify/{code}', [App\Http\Controllers\PickupVerificationController::class, 'verify'])->name('pickup.verify');
+Route::post('/pickup/scan/{code}', [App\Http\Controllers\PickupVerificationController::class, 'scan'])->name('pickup.scan');
+Route::get('/pickup/verification/{verification}/details', [App\Http\Controllers\PickupVerificationController::class, 'getVerificationDetails'])->name('pickup.verification.details');
+
+// Notification Routes (Authenticated Users)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    Route::post('/notifications/fcm-token', [NotificationController::class, 'updateFcmToken'])->name('notifications.update-fcm-token');
+    Route::post('/notifications/preferences', [NotificationController::class, 'updatePreferences'])->name('notifications.update-preferences');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+    
+    // Pickup verification routes (authenticated)
+    Route::post('/pickup/verification/{verification}/complete', [App\Http\Controllers\PickupVerificationController::class, 'completePickup'])->name('pickup.verification.complete');
+    Route::post('/pickup/verification/{verification}/report-issue', [App\Http\Controllers\PickupVerificationController::class, 'reportIssue'])->name('pickup.verification.report-issue');
+});
+
 
 // Restaurant Owner Routes
 Route::middleware(['auth', 'restaurant_owner'])->prefix('restaurant')->name('restaurant.')->group(function () {
     Route::get('/dashboard', [RestaurantDashboardController::class, 'index'])->name('dashboard');
     
     Route::resource('listings', FoodListingController::class);
+    
+    // Match management routes for donors
+    Route::patch('/listings/{listing}/matches/{match}/approve', [FoodListingController::class, 'approveMatch'])->name('listings.matches.approve');
+    Route::patch('/listings/{listing}/matches/{match}/schedule', [FoodListingController::class, 'scheduleMatch'])->name('listings.matches.schedule');
+    Route::patch('/listings/{listing}/matches/{match}/reject', [FoodListingController::class, 'rejectMatch'])->name('listings.matches.reject');
     
     // Profile routes
     Route::get('/profile', [RestaurantProfileController::class, 'show'])->name('profile.show');
@@ -61,6 +89,12 @@ Route::middleware(['auth'])->prefix('recipient')->name('recipient.')->group(func
     Route::get('/browse/{listing}', [FoodBrowsingController::class, 'show'])->name('browse.show');
     Route::post('/browse/{listing}/interest', [FoodBrowsingController::class, 'expressInterest'])->name('browse.express-interest');
     Route::get('/matches', [FoodBrowsingController::class, 'myMatches'])->name('matches.index');
+    
+    // Match status tracking routes
+    Route::patch('/matches/{match}/confirm', [FoodBrowsingController::class, 'confirmPickup'])->name('matches.confirm');
+    Route::patch('/matches/{match}/schedule', [FoodBrowsingController::class, 'schedulePickup'])->name('matches.schedule');
+    Route::patch('/matches/{match}/complete', [FoodBrowsingController::class, 'completePickup'])->name('matches.complete');
+    Route::patch('/matches/{match}/cancel', [FoodBrowsingController::class, 'cancelMatch'])->name('matches.cancel');
 });
 
 // Admin Routes
@@ -101,4 +135,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::patch('/food-listings/{listing}/deactivate', [FoodListingMonitorController::class, 'deactivate'])->name('food-listings.deactivate');
     Route::post('/food-listings/bulk-expire', [FoodListingMonitorController::class, 'bulkExpireOld'])->name('food-listings.bulk-expire');
     Route::get('/food-listings/compliance/report', [FoodListingMonitorController::class, 'complianceReport'])->name('food-listings.compliance');
+    
+    // Pickup Verification Management
+    Route::get('/pickup-verifications', [App\Http\Controllers\PickupVerificationController::class, 'adminIndex'])->name('pickup-verifications.index');
+    Route::get('/pickup-verifications/{verification}', [App\Http\Controllers\PickupVerificationController::class, 'adminReview'])->name('pickup-verifications.show');
+    Route::post('/pickup-verifications/{verification}/resolve', [App\Http\Controllers\PickupVerificationController::class, 'adminResolve'])->name('pickup-verifications.resolve');
 });

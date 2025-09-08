@@ -12,6 +12,12 @@
                 <p class="text-gray-600 mt-1">Track your food donation interests and pickups</p>
             </div>
             <div class="flex space-x-3">
+                <a href="{{ route('pickup.scanner') }}" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors text-sm font-medium flex items-center">
+                    <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    Scan QR Code
+                </a>
                 <a href="{{ route('recipient.browse.index') }}" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center">
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -165,17 +171,67 @@
                                 </div>
 
                                 <!-- Action Buttons -->
-                                <div class="ml-6 flex flex-col space-y-2 min-w-32">
+                                <div class="ml-6 flex flex-col space-y-2 min-w-36">
                                     <a href="{{ route('recipient.browse.show', $match->foodListing) }}" 
-                                       class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors text-sm font-medium text-center">
+                                       class="bg-green-600 text-white py-2 px-3 rounded-md hover:bg-green-700 transition-colors text-xs font-medium text-center">
                                         View Details
                                     </a>
                                     
-                                    @if($match->status === 'approved' && $match->qr_code)
-                                        <button onclick="showQrCode('{{ $match->qr_code }}')" 
-                                                class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
-                                            Show QR Code
-                                        </button>
+                                    @if($match->status === 'pending')
+                                        <form action="{{ route('recipient.matches.cancel', $match) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" 
+                                                    onclick="return confirm('Are you sure you want to cancel this match?')"
+                                                    class="w-full bg-red-600 text-white py-2 px-3 rounded-md hover:bg-red-700 transition-colors text-xs font-medium">
+                                                Cancel Interest
+                                            </button>
+                                        </form>
+                                    @endif
+                                    
+                                    @if($match->status === 'confirmed')
+                                        <form action="{{ route('recipient.matches.complete', $match) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" 
+                                                    class="w-full bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors text-xs font-medium">
+                                                Mark Completed
+                                            </button>
+                                        </form>
+                                        
+                                        @if($match->qr_code && $match->pickupVerification)
+                                            <a href="{{ route('pickup.verify', $match->qr_code) }}"
+                                               class="w-full bg-gray-600 text-white py-2 px-3 rounded-md hover:bg-gray-700 transition-colors text-xs font-medium text-center block">
+                                                View Pickup Details
+                                            </a>
+                                        @endif
+                                    @endif
+                                    
+                                    @if($match->status === 'scheduled')
+                                        <form action="{{ route('recipient.matches.complete', $match) }}" method="POST" class="inline">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" 
+                                                    class="w-full bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors text-xs font-medium">
+                                                Mark Completed
+                                            </button>
+                                        </form>
+                                        
+                                        <div class="text-xs text-gray-500 text-center">
+                                            @if($match->pickup_scheduled_at)
+                                                Scheduled for:<br>
+                                                {{ $match->pickup_scheduled_at->format('M d, H:i') }}
+                                            @endif
+                                        </div>
+                                    @endif
+                                    
+                                    @if($match->status === 'completed')
+                                        <div class="text-center">
+                                            <svg class="h-6 w-6 text-green-500 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            <span class="text-xs text-green-600 font-medium">Completed</span>
+                                        </div>
                                     @endif
                                 </div>
                             </div>

@@ -2,6 +2,10 @@
 
 @section('title', 'Admin Dashboard - MyFoodshare')
 
+@push('head')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@endpush
+
 @section('content')
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -92,14 +96,8 @@
                 <!-- Monthly Trends Chart -->
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-xl font-semibold text-gray-900 mb-4">Monthly Trends</h2>
-                    <div class="h-64 flex items-center justify-center bg-gray-50 rounded">
-                        <div class="text-center">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                            </svg>
-                            <p class="text-gray-600 mt-2">Chart visualization would be displayed here</p>
-                            <p class="text-sm text-gray-500">Showing listings, matches, and pickups over time</p>
-                        </div>
+                    <div class="h-64">
+                        <canvas id="monthlyTrendsChart"></canvas>
                     </div>
                 </div>
 
@@ -241,4 +239,70 @@
         </div>
     </div>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Monthly Trends Chart
+    const ctx = document.getElementById('monthlyTrendsChart').getContext('2d');
+    const monthlyData = @json($monthlyData);
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthlyData.map(item => item.month),
+            datasets: [
+                {
+                    label: 'Listings',
+                    data: monthlyData.map(item => item.listings),
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.1
+                },
+                {
+                    label: 'Matches',
+                    data: monthlyData.map(item => item.matches),
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    tension: 0.1
+                },
+                {
+                    label: 'New Users',
+                    data: monthlyData.map(item => item.users),
+                    borderColor: 'rgb(168, 85, 247)',
+                    backgroundColor: 'rgba(168, 85, 247, 0.1)',
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                },
+                title: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                },
+                x: {
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)'
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+@endpush
+
 @endsection

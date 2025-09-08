@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\FoodListing;
 use App\Models\FoodMatch;
 use App\Notifications\NewFoodMatchNotification;
+use App\Notifications\InterestExpressedNotification;
 use App\Services\FoodMatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -106,7 +107,7 @@ class FoodBrowsingController extends Controller
         ]);
 
         // Notify the donor about the new interest
-        $listing->user->notify(new NewFoodMatchNotification($match, true));
+        $listing->user->notify(new InterestExpressedNotification($match));
 
         return redirect()->back()->with('success', 'Interest expressed successfully! The donor will be notified.');
     }
@@ -136,5 +137,57 @@ class FoodBrowsingController extends Controller
         });
 
         return view('recipient.browse.map', compact('listings', 'radius'));
+    }
+
+    public function confirmPickup(FoodMatch $match)
+    {
+        // Ensure the match belongs to the authenticated recipient
+        if ($match->recipient_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $match->confirmPickup();
+
+        return redirect()->back()->with('success', 'Pickup confirmed! You will receive further instructions.');
+    }
+
+    public function schedulePickup(Request $request, FoodMatch $match)
+    {
+        // Ensure the match belongs to the authenticated recipient
+        if ($match->recipient_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $request->validate([
+            'scheduled_at' => 'required|date|after:now',
+        ]);
+
+        $match->schedulePickup(new \DateTime($request->scheduled_at));
+
+        return redirect()->back()->with('success', 'Pickup scheduled successfully!');
+    }
+
+    public function completePickup(FoodMatch $match)
+    {
+        // Ensure the match belongs to the authenticated recipient
+        if ($match->recipient_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $match->completePickup();
+
+        return redirect()->back()->with('success', 'Pickup completed! Thank you for reducing food waste.');
+    }
+
+    public function cancelMatch(Request $request, FoodMatch $match)
+    {
+        // Ensure the match belongs to the authenticated recipient
+        if ($match->recipient_id !== Auth::id()) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $match->cancelMatch($request->get('reason'));
+
+        return redirect()->back()->with('info', 'Interest cancelled successfully.');
     }
 }

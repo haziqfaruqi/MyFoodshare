@@ -8,6 +8,7 @@ use App\Models\FoodListing;
 use App\Models\FoodMatch;
 use App\Models\Recipient;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -32,15 +33,34 @@ class DashboardController extends Controller
             ['user' => 'Hope Foundation', 'action' => 'New registration pending', 'time' => '1 hour ago', 'status' => 'warning'],
         ];
 
-        $monthlyData = [
-            ['month' => 'Jan', 'listings' => 45, 'matches' => 38, 'users' => 12],
-            ['month' => 'Feb', 'listings' => 52, 'matches' => 44, 'users' => 18],
-            ['month' => 'Mar', 'listings' => 48, 'matches' => 41, 'users' => 15],
-            ['month' => 'Apr', 'listings' => 61, 'matches' => 52, 'users' => 22],
-            ['month' => 'May', 'listings' => 58, 'matches' => 49, 'users' => 19],
-            ['month' => 'Jun', 'listings' => 67, 'matches' => 58, 'users' => 25],
-        ];
+        // Real monthly trends for the last 6 months
+        $monthlyData = $this->getMonthlyTrends();
 
         return view('admin.dashboard', compact('stats', 'recentActivity', 'monthlyData', 'pendingUsers'));
+    }
+
+    private function getMonthlyTrends()
+    {
+        $trends = [];
+        
+        // Get data for the last 6 months
+        for ($i = 5; $i >= 0; $i--) {
+            $month = Carbon::now()->subMonths($i);
+            
+            $trends[] = [
+                'month' => $month->format('M'),
+                'listings' => FoodListing::whereYear('created_at', $month->year)
+                    ->whereMonth('created_at', $month->month)
+                    ->count(),
+                'matches' => FoodMatch::whereYear('created_at', $month->year)
+                    ->whereMonth('created_at', $month->month)
+                    ->count(),
+                'users' => User::whereYear('created_at', $month->year)
+                    ->whereMonth('created_at', $month->month)
+                    ->count(),
+            ];
+        }
+        
+        return $trends;
     }
 }
