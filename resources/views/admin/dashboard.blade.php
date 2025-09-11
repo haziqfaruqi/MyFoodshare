@@ -178,63 +178,18 @@
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
                     <div class="space-y-3">
-                        <button class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors text-sm font-medium">
+                        <a href="#" class="w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 transition-colors text-sm font-medium block text-center">
                             Generate Report
-                        </button>
+                        </a>
                         <a href="{{ route('admin.users.index') }}" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium block text-center">
                             Manage Users
                         </a>
-                        <button class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors text-sm font-medium">
+                        <a href="{{ route('admin.analytics.index') }}" class="w-full bg-purple-600 text-white py-2 px-4 rounded-md hover:bg-purple-700 transition-colors text-sm font-medium block text-center">
                             View Analytics
-                        </button>
-                        <button class="w-full bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 transition-colors text-sm font-medium">
-                            System Settings
-                        </button>
+                        </a>
                     </div>
                 </div>
 
-                <!-- Platform Health -->}
-                <div class="bg-white rounded-lg shadow-lg p-6">
-                    <h2 class="text-lg font-semibold text-gray-900 mb-4">Platform Health</h2>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-sm text-gray-600">API Status</span>
-                            </div>
-                            <span class="text-green-600 font-medium text-sm">Online</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-sm text-gray-600">Database</span>
-                            </div>
-                            <span class="text-green-600 font-medium text-sm">Healthy</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <svg class="h-4 w-4 text-yellow-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span class="text-sm text-gray-600">Avg Response</span>
-                            </div>
-                            <span class="text-yellow-600 font-medium text-sm">245ms</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <svg class="h-4 w-4 text-green-500 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                </svg>
-                                <span class="text-sm text-gray-600">Uptime</span>
-                            </div>
-                            <span class="text-green-600 font-medium text-sm">99.9%</span>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>

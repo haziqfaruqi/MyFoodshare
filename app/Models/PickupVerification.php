@@ -31,17 +31,14 @@ class PickupVerification extends Model
         'pickup_completed_at',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'pickup_details' => 'array',
-            'location_data' => 'array',
-            'photo_evidence' => 'array',
-            'scanned_at' => 'datetime',
-            'pickup_completed_at' => 'datetime',
-            'quality_confirmed' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'pickup_details' => 'array',
+        'location_data' => 'array',
+        'photo_evidence' => 'array',
+        'scanned_at' => 'datetime',
+        'pickup_completed_at' => 'datetime',
+        'quality_confirmed' => 'boolean',
+    ];
 
     public function foodMatch()
     {

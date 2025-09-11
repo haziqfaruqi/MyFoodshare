@@ -6,36 +6,115 @@ use App\Http\Controllers\Controller;
 use App\Models\FoodListing;
 use App\Models\FoodMatch;
 use App\Models\User;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class AnalyticsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // Monthly trends for the last 12 months
-        $monthlyTrends = $this->getMonthlyTrends();
-        
-        // Summary statistics
-        $stats = [
+        // Time period filter
+        $period = $request->get('period', '30'); // days
+        $startDate = now()->subDays((int)$period);
+
+        // Platform-wide impact metrics
+        $platformStats = [
             'total_users' => User::count(),
+            'active_users' => User::where(function($query) {
+                $query->whereHas('foodListings', function($q) {
+                    $q->where('created_at', '>=', now()->subDays(30));
+                })
+                ->orWhereHas('matches', function($q) {
+                    $q->where('created_at', '>=', now()->subDays(30));
+                })
+                ->orWhere('created_at', '>=', now()->subDays(30));
+            })->count(),
             'total_listings' => FoodListing::count(),
             'total_matches' => FoodMatch::count(),
+            'total_donations' => ActivityLog::where('activity_logs.log_name', 'donation')->where('activity_logs.event', 'created')->count(),
+            'total_pickups' => ActivityLog::where('activity_logs.log_name', 'pickup')->where('activity_logs.event', 'pickup_completed')->count(),
+            'meals_provided' => ActivityLog::where('activity_logs.log_name', 'pickup')
+                ->where('activity_logs.event', 'pickup_completed')
+                ->get()
+                ->sum(function($log) {
+                    return $log->properties['estimated_meals'] ?? 1;
+                }),
+            'waste_reduced_kg' => ActivityLog::where('activity_logs.log_name', 'donation')
+                ->where('activity_logs.event', 'created')
+                ->get()
+                ->sum(function($log) {
+                    return $log->properties['estimated_weight_kg'] ?? 0.5;
+                }),
             'success_rate' => $this->calculateSuccessRate(),
         ];
 
-        // Recent activity data
-        $recentActivity = $this->getRecentActivity();
+        // Monthly trends for the last 12 months
+        $monthlyTrends = $this->getMonthlyTrends();
         
-        // Real geographic distribution data
+        // User activity breakdown
+        $userStats = [
+            'total_donors' => User::where('role', 'donor')->count(),
+            'active_donors' => User::where('role', 'donor')->whereHas('foodListings', function($q) use ($startDate) {
+                $q->where('created_at', '>=', $startDate);
+            })->count(),
+            'total_recipients' => User::where('role', 'recipient')->count(),
+            'active_recipients' => User::where('role', 'recipient')->whereHas('matches', function($q) use ($startDate) {
+                $q->where('created_at', '>=', $startDate);
+            })->count(),
+        ];
+
+        // Category performance
+        $categoryStats = FoodListing::select('category', DB::raw('count(*) as listings'))
+            ->where('created_at', '>=', $startDate)
+            ->groupBy('category')
+            ->orderBy('listings', 'desc')
+            ->get();
+
+        // Geographic distribution
         $geographicData = $this->getGeographicDistribution();
 
+        // Fraud and safety metrics
+        $safetyStats = [
+            'disputed_pickups' => DB::table('pickup_verifications')
+                ->where('verification_status', 'disputed')
+                ->count(),
+            'resolved_disputes' => ActivityLog::where('activity_logs.log_name', 'admin')
+                ->where('activity_logs.event', 'dispute_resolved')
+                ->where('created_at', '>=', $startDate)
+                ->count(),
+            'pending_approvals' => User::where('users.status', 'pending')->count(),
+            'rejected_users' => User::where('users.status', 'rejected')->count(),
+        ];
+
+        // Recent high-level activities
+        $recentActivities = ActivityLog::whereIn('log_name', ['donation', 'pickup', 'admin'])
+            ->with(['causer', 'subject'])
+            ->latest()
+            ->take(20)
+            ->get();
+
+        // Compliance and performance metrics
+        $complianceStats = [
+            'avg_pickup_time' => $this->getAveragePickupTime(),
+            'expired_listings' => FoodListing::where('food_listings.status', 'expired')->count(),
+            'quality_ratings_avg' => DB::table('pickup_verifications')
+                ->whereNotNull('quality_rating')
+                ->avg('quality_rating'),
+            'photo_evidence_rate' => $this->getPhotoEvidenceRate(),
+        ];
+
         return view('admin.analytics.index', compact(
+            'platformStats',
             'monthlyTrends', 
-            'stats', 
-            'recentActivity',
-            'geographicData'
+            'userStats',
+            'categoryStats',
+            'geographicData',
+            'safetyStats',
+            'recentActivities',
+            'complianceStats',
+            'period'
         ));
     }
 
@@ -110,7 +189,7 @@ class AnalyticsController extends Controller
         // Get users with coordinates
         $usersWithCoords = User::whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->where('status', 'active')
+            ->where('users.status', 'active')
             ->get();
 
         // Group users by regions based on GPS coordinates
@@ -140,7 +219,7 @@ class AnalyticsController extends Controller
         // Get users without coordinates and group by address
         $usersWithoutCoords = User::whereNull('latitude')
             ->whereNotNull('address')
-            ->where('status', 'active')
+            ->where('users.status', 'active')
             ->get();
 
         foreach ($usersWithoutCoords as $user) {
@@ -246,5 +325,60 @@ class AnalyticsController extends Controller
         $firstArea = trim($words[0]);
         
         return ucwords($firstArea) ?: 'Other Areas';
+    }
+
+    private function getActivityTrends()
+    {
+        return ActivityLog::where('created_at', '>=', now()->subMonths(12))
+            ->select(
+                DB::raw('MONTH(created_at) as month'),
+                DB::raw('YEAR(created_at) as year'),
+                DB::raw('log_name'),
+                DB::raw('COUNT(*) as count')
+            )
+            ->whereIn('activity_logs.log_name', ['donation', 'pickup'])
+            ->whereIn('activity_logs.event', ['created', 'pickup_completed'])
+            ->groupBy('year', 'month', 'log_name')
+            ->orderBy('year', 'desc')
+            ->orderBy('month', 'desc')
+            ->get()
+            ->groupBy(function($item) {
+                return $item->year . '-' . sprintf('%02d', $item->month);
+            });
+    }
+
+    private function getAveragePickupTime()
+    {
+        // Calculate average time from listing creation to pickup completion
+        $completedMatches = FoodMatch::where('matches.status', 'completed')
+            ->whereNotNull('completed_at')
+            ->with('foodListing')
+            ->get();
+
+        if ($completedMatches->isEmpty()) {
+            return 0;
+        }
+
+        $totalHours = $completedMatches->sum(function($match) {
+            return $match->foodListing->created_at->diffInHours($match->completed_at);
+        });
+
+        return round($totalHours / $completedMatches->count(), 1);
+    }
+
+    private function getPhotoEvidenceRate()
+    {
+        $totalVerifications = DB::table('pickup_verifications')->count();
+        
+        if ($totalVerifications === 0) {
+            return 0;
+        }
+
+        $withPhotos = DB::table('pickup_verifications')
+            ->whereNotNull('photo_evidence')
+            ->where('photo_evidence', '!=', '[]')
+            ->count();
+
+        return round(($withPhotos / $totalVerifications) * 100, 1);
     }
 }

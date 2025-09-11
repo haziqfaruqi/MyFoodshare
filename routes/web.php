@@ -40,12 +40,49 @@ Route::post('/register/recipient', [RegisterController::class, 'storeRecipient']
 // QR Code Verification Routes (Public)
 Route::get('/food-listing/{id}/verify/{code}', [QrVerificationController::class, 'verify'])->name('food-listing.verify');
 Route::get('/food-listing/{listing}/qr', [QrVerificationController::class, 'generateQr'])->name('food-listing.qr');
+Route::post('/food-listing/{id}/verify/{code}/complete', [QrVerificationController::class, 'completePickup'])->name('food-listing.complete-pickup');
 
 // Pickup Verification Routes
 Route::get('/pickup/scanner', [App\Http\Controllers\PickupVerificationController::class, 'showScanner'])->name('pickup.scanner');
 Route::get('/pickup/verify/{code}', [App\Http\Controllers\PickupVerificationController::class, 'verify'])->name('pickup.verify');
 Route::post('/pickup/scan/{code}', [App\Http\Controllers\PickupVerificationController::class, 'scan'])->name('pickup.scan');
 Route::get('/pickup/verification/{verification}/details', [App\Http\Controllers\PickupVerificationController::class, 'getVerificationDetails'])->name('pickup.verification.details');
+
+// Debug route (remove after testing)
+Route::get('/debug/listings', function() {
+    $listings = \App\Models\FoodListing::with('user')
+        ->where('approval_status', 'approved')
+        ->where('status', 'active')
+        ->where('expiry_date', '>=', now()->toDateString())
+        ->get();
+    
+    $recipients = \App\Models\User::where('role', 'recipient')->get();
+    
+    return [
+        'total_approved_listings' => $listings->count(),
+        'total_recipients' => $recipients->count(),
+        'listings' => $listings->map(function($listing) {
+            return [
+                'id' => $listing->id,
+                'food_name' => $listing->food_name,
+                'status' => $listing->status,
+                'approval_status' => $listing->approval_status,
+                'expiry_date' => $listing->expiry_date,
+                'has_coordinates' => !is_null($listing->latitude) && !is_null($listing->longitude),
+                'donor_status' => $listing->user->status ?? 'unknown',
+                'created_at' => $listing->created_at
+            ];
+        }),
+        'recipients' => $recipients->map(function($recipient) {
+            return [
+                'id' => $recipient->id,
+                'name' => $recipient->name,
+                'status' => $recipient->status,
+                'has_coordinates' => !is_null($recipient->latitude) && !is_null($recipient->longitude)
+            ];
+        })
+    ];
+})->name('debug.listings');
 
 // Notification Routes (Authenticated Users)
 Route::middleware(['auth'])->group(function () {
@@ -71,9 +108,16 @@ Route::middleware(['auth', 'restaurant_owner'])->prefix('restaurant')->name('res
     Route::resource('listings', FoodListingController::class);
     
     // Match management routes for donors
+    Route::get('/matches', [FoodListingController::class, 'manageMatches'])->name('matches.index');
     Route::patch('/listings/{listing}/matches/{match}/approve', [FoodListingController::class, 'approveMatch'])->name('listings.matches.approve');
     Route::patch('/listings/{listing}/matches/{match}/schedule', [FoodListingController::class, 'scheduleMatch'])->name('listings.matches.schedule');
     Route::patch('/listings/{listing}/matches/{match}/reject', [FoodListingController::class, 'rejectMatch'])->name('listings.matches.reject');
+    
+    // Reports route
+    Route::get('/reports', [RestaurantDashboardController::class, 'reports'])->name('reports');
+    
+    // Donation tracking route
+    Route::get('/track-donations', [RestaurantDashboardController::class, 'trackDonations'])->name('track-donations');
     
     // Profile routes
     Route::get('/profile', [RestaurantProfileController::class, 'show'])->name('profile.show');

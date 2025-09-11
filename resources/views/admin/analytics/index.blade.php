@@ -25,7 +25,7 @@
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <h3 class="text-lg font-semibold text-gray-900">{{ $stats['total_users'] }}</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ $platformStats['total_users'] }}</h3>
                         <p class="text-sm text-gray-600">Total Users</p>
                     </div>
                 </div>
@@ -39,7 +39,7 @@
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <h3 class="text-lg font-semibold text-gray-900">{{ $stats['total_listings'] }}</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ $platformStats['total_listings'] }}</h3>
                         <p class="text-sm text-gray-600">Total Listings</p>
                     </div>
                 </div>
@@ -53,7 +53,7 @@
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <h3 class="text-lg font-semibold text-gray-900">{{ $stats['total_matches'] }}</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ $platformStats['total_matches'] }}</h3>
                         <p class="text-sm text-gray-600">Total Matches</p>
                     </div>
                 </div>
@@ -67,7 +67,7 @@
                         </svg>
                     </div>
                     <div class="ml-4">
-                        <h3 class="text-lg font-semibold text-gray-900">{{ $stats['success_rate'] }}%</h3>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ $platformStats['success_rate'] }}%</h3>
                         <p class="text-sm text-gray-600">Success Rate</p>
                     </div>
                 </div>
@@ -111,9 +111,9 @@
                 <h3 class="text-lg font-medium text-gray-900">Recent System Activity</h3>
             </div>
             
-            @if($recentActivity->count() > 0)
+            @if($recentActivities->count() > 0)
                 <div class="divide-y divide-gray-200">
-                    @foreach($recentActivity as $activity)
+                    @foreach($recentActivities as $activity)
                         <div class="px-6 py-4 flex items-center justify-between">
                             <div class="flex items-center">
                                 <div class="h-8 w-8 rounded-full flex items-center justify-center

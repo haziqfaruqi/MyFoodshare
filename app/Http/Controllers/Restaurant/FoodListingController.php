@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Restaurant;
 
 use App\Http\Controllers\Controller;
 use App\Models\FoodListing;
+use App\Models\FoodMatch;
+use App\Models\ActivityLog;
 use App\Services\FoodMatchingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -67,6 +69,22 @@ class FoodListingController extends Controller
             }
         }
 
+        // Use coordinates from request, or fall back to user's coordinates
+        $latitude = $request->latitude ?? Auth::user()->latitude;
+        $longitude = $request->longitude ?? Auth::user()->longitude;
+        
+        // If still no coordinates, try to use a default based on pickup address
+        if (!$latitude || !$longitude) {
+            // Log that coordinates are missing so we can fix this
+            \Log::info('Food listing created without coordinates', [
+                'user_id' => Auth::id(),
+                'user_has_coords' => !is_null(Auth::user()->latitude) && !is_null(Auth::user()->longitude),
+                'request_has_coords' => !is_null($request->latitude) && !is_null($request->longitude),
+                'pickup_location' => $request->pickup_location,
+                'pickup_address' => $request->pickup_address
+            ]);
+        }
+
         $listing = Auth::user()->foodListings()->create([
             'food_name' => $request->food_name,
             'description' => $request->description,
@@ -76,17 +94,34 @@ class FoodListingController extends Controller
             'expiry_date' => $request->expiry_date,
             'expiry_time' => $request->expiry_time,
             'pickup_location' => $request->pickup_location,
-            'latitude' => $request->latitude,
-            'longitude' => $request->longitude,
+            'latitude' => $latitude,
+            'longitude' => $longitude,
             'pickup_address' => $request->pickup_address,
             'special_instructions' => $request->special_instructions,
-            'dietary_info' => $request->dietary_info ?? [],
+            'dietary_info' => is_array($request->dietary_info) ? $request->dietary_info : [],
             'images' => $imagePaths,
             'status' => 'active',
         ]);
         
         // Generate QR code data after creating the listing
         $listing->generateQrCode();
+        
+        // Log the donation activity
+        try {
+            ActivityLog::logFoodDonation('created', $listing, Auth::user(), [
+                'estimated_weight_kg' => (float) $this->estimateWeight($listing),
+                'estimated_meals' => (int) $this->estimateMeals($listing),
+                'category' => (string) $listing->category,
+                'quantity' => (int) $listing->quantity,
+                'unit' => (string) $listing->unit,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to log food donation activity', [
+                'error' => $e->getMessage(),
+                'listing_id' => $listing->id,
+                'user_id' => Auth::id()
+            ]);
+        }
         
         // Auto-match with nearby recipients
         $matchingService = new FoodMatchingService();
@@ -152,7 +187,7 @@ class FoodListingController extends Controller
             'longitude' => $request->longitude,
             'pickup_address' => $request->pickup_address,
             'special_instructions' => $request->special_instructions,
-            'dietary_info' => $request->dietary_info ?? [],
+            'dietary_info' => is_array($request->dietary_info) ? $request->dietary_info : [],
         ];
 
         if ($request->hasFile('images')) {
@@ -192,9 +227,10 @@ class FoodListingController extends Controller
             abort(404, 'Match not found for this listing.');
         }
 
+        // Confirm pickup - this will create the PickupVerification and update status
         $match->confirmPickup();
 
-        return redirect()->back()->with('success', 'Pickup approved! The recipient has been notified.');
+        return redirect()->back()->with('success', 'Pickup approved! The recipient has been notified and a QR verification code has been generated.');
     }
 
     public function scheduleMatch(Request $request, FoodListing $listing, FoodMatch $match)
@@ -230,5 +266,93 @@ class FoodListingController extends Controller
         ]);
 
         return redirect()->back()->with('info', 'Match rejected successfully.');
+    }
+
+    private function estimateWeight(FoodListing $listing)
+    {
+        // Simple weight estimation based on category and quantity
+        $categoryWeights = [
+            'vegetables' => 0.3, // kg per unit
+            'fruits' => 0.2,
+            'dairy' => 0.25,
+            'meat' => 0.4,
+            'bakery' => 0.15,
+            'pantry' => 0.5,
+            'prepared_food' => 0.3,
+        ];
+
+        $baseWeight = $categoryWeights[$listing->category] ?? 0.3;
+        return $listing->quantity * $baseWeight;
+    }
+
+    private function estimateMeals(FoodListing $listing)
+    {
+        // Estimate meals based on quantity and category
+        $mealMultipliers = [
+            'vegetables' => 0.5, // meals per unit
+            'fruits' => 0.3,
+            'dairy' => 0.2,
+            'meat' => 1.5,
+            'bakery' => 0.8,
+            'pantry' => 2.0,
+            'prepared_food' => 1.0,
+        ];
+
+        $baseMeals = $mealMultipliers[$listing->category] ?? 0.5;
+        return max(1, round($listing->quantity * $baseMeals));
+    }
+
+    public function manageMatches(Request $request)
+    {
+        $user = Auth::user();
+        
+        // Get all matches for this restaurant's listings
+        $query = FoodMatch::whereHas('foodListing', function($q) use ($user) {
+            $q->where('user_id', $user->id);
+        })->with(['foodListing', 'recipient', 'pickupVerification']);
+
+        // Filter by status
+        $status = $request->get('status', 'pending');
+        if ($status !== 'all') {
+            $query->where('status', $status);
+        }
+
+        // Filter by search (recipient name or food name)
+        if ($request->filled('search')) {
+            $query->where(function($q) use ($request) {
+                $q->whereHas('recipient', function($recipientQuery) use ($request) {
+                    $recipientQuery->where('name', 'like', '%' . $request->search . '%')
+                                  ->orWhere('organization_name', 'like', '%' . $request->search . '%');
+                })->orWhereHas('foodListing', function($listingQuery) use ($request) {
+                    $listingQuery->where('food_name', 'like', '%' . $request->search . '%');
+                });
+            });
+        }
+
+        $matches = $query->latest()->paginate(15);
+
+        // Get status counts for tabs
+        $statusCounts = [
+            'all' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->count(),
+            'pending' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->where('status', 'pending')->count(),
+            'approved' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->where('status', 'approved')->count(),
+            'scheduled' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->where('status', 'scheduled')->count(),
+            'completed' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->where('status', 'completed')->count(),
+            'rejected' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
+                $q->where('user_id', $user->id);
+            })->where('status', 'rejected')->count(),
+        ];
+
+        return view('restaurant.matches.index', compact('matches', 'statusCounts', 'status'));
     }
 }

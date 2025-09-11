@@ -72,35 +72,52 @@ class FoodMatchingService
 
     public function getMatchesForRecipient(User $recipient, int $radiusKm = self::DEFAULT_RADIUS_KM)
     {
-        if (!$recipient->latitude || !$recipient->longitude) {
-            return collect();
-        }
-
-        $listings = FoodListing::where('status', 'active')
+        $baseQuery = FoodListing::where('status', 'active')
             ->where('approval_status', 'approved')
+            ->where('expiry_date', '>=', now()->toDateString())
             ->whereHas('user', function ($query) {
                 $query->where('status', 'active');
             })
-            ->whereNotNull('latitude')
-            ->whereNotNull('longitude')
             ->with(['user', 'matches' => function ($query) use ($recipient) {
                 $query->where('recipient_id', $recipient->id);
-            }])
-            ->select('food_listings.*')
-            ->selectRaw("
-                (6371 * acos(
-                    cos(radians(?)) * 
-                    cos(radians(latitude)) * 
-                    cos(radians(longitude) - radians(?)) + 
-                    sin(radians(?)) * 
-                    sin(radians(latitude))
-                )) AS distance
-            ", [$recipient->latitude, $recipient->longitude, $recipient->latitude])
-            ->having('distance', '<=', $radiusKm)
-            ->orderBy('distance')
-            ->get();
+            }]);
 
-        return $listings;
+        // If recipient has coordinates, filter by distance and calculate proximity
+        if ($recipient->latitude && $recipient->longitude) {
+            $listings = $baseQuery
+                ->whereNotNull('latitude')
+                ->whereNotNull('longitude')
+                ->select('food_listings.*')
+                ->selectRaw("
+                    (6371 * acos(
+                        cos(radians(?)) * 
+                        cos(radians(latitude)) * 
+                        cos(radians(longitude) - radians(?)) + 
+                        sin(radians(?)) * 
+                        sin(radians(latitude))
+                    )) AS distance
+                ", [$recipient->latitude, $recipient->longitude, $recipient->latitude])
+                ->having('distance', '<=', $radiusKm)
+                ->orderBy('distance')
+                ->get();
+
+            // Also include listings without coordinates (fallback)
+            $listingsWithoutCoords = $baseQuery
+                ->where(function ($query) {
+                    $query->whereNull('latitude')->orWhereNull('longitude');
+                })
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            // Merge both collections
+            $allListings = $listings->concat($listingsWithoutCoords);
+            return $allListings;
+        } else {
+            // If recipient doesn't have coordinates, show all approved listings
+            return $baseQuery
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
     }
 
     public function calculateDistance($lat1, $lon1, $lat2, $lon2)

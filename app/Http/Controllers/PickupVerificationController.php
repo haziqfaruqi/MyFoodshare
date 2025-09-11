@@ -250,4 +250,81 @@ class PickupVerificationController extends Controller
 
         return redirect()->back()->with('success', 'Verification resolved successfully.');
     }
+
+    // API Methods for QR Code Conversion
+    public function createFromListing(Request $request)
+    {
+        $request->validate([
+            'listing_id' => 'required|exists:food_listings,id',
+            'listing_code' => 'required|string'
+        ]);
+
+        $listing = \App\Models\FoodListing::findOrFail($request->listing_id);
+        
+        // Verify the listing code
+        if ($listing->getVerificationCode() !== $request->listing_code) {
+            return response()->json(['error' => 'Invalid listing verification code'], 404);
+        }
+
+        // Find the user's approved match for this listing
+        $match = $listing->matches()
+            ->where('recipient_id', Auth::id())
+            ->whereIn('status', ['approved', 'scheduled'])
+            ->first();
+
+        if (!$match) {
+            return response()->json(['error' => 'No approved pickup found for this item'], 404);
+        }
+
+        // Check if pickup verification already exists
+        $existingVerification = PickupVerification::where('food_match_id', $match->id)->first();
+        
+        if ($existingVerification) {
+            return response()->json([
+                'success' => true,
+                'verification_code' => $existingVerification->verification_code,
+                'message' => 'Using existing pickup verification'
+            ]);
+        }
+
+        // Create new pickup verification
+        $verification = PickupVerification::generateForMatch($match);
+
+        return response()->json([
+            'success' => true,
+            'verification_code' => $verification->verification_code,
+            'message' => 'Pickup verification created successfully'
+        ]);
+    }
+
+    public function findListingByCode(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string|size:8'
+        ]);
+
+        // Find listing by verification code
+        $listings = \App\Models\FoodListing::all();
+        
+        foreach ($listings as $listing) {
+            if ($listing->getVerificationCode() === $request->code) {
+                // Check if user has an approved match
+                $match = $listing->matches()
+                    ->where('recipient_id', Auth::id())
+                    ->whereIn('status', ['approved', 'scheduled'])
+                    ->first();
+
+                if ($match) {
+                    return response()->json([
+                        'success' => true,
+                        'listing_id' => $listing->id,
+                        'food_name' => $listing->food_name,
+                        'donor' => $listing->user->name
+                    ]);
+                }
+            }
+        }
+
+        return response()->json(['error' => 'QR code not found or no approved pickup for this item'], 404);
+    }
 }

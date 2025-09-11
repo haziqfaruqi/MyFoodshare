@@ -6,37 +6,40 @@
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">My Matches</h1>
-                <p class="text-gray-600 mt-1">Track your food donation interests and pickups</p>
+        <div class="mb-8">
+            <div class="mb-6">
+                <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">My Matches</h1>
+                <p class="text-gray-600 mt-1 text-sm sm:text-base">Track your food donation interests and pickups</p>
             </div>
-            <div class="flex space-x-3">
-                <a href="{{ route('pickup.scanner') }}" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors text-sm font-medium flex items-center">
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-3">
+                <a href="{{ route('pickup.scanner') }}" class="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors text-sm font-medium flex items-center justify-center">
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    Scan QR Code
+                    <span class="hidden xs:inline">Scan QR Code</span>
+                    <span class="xs:hidden">Scan QR</span>
                 </a>
-                <a href="{{ route('recipient.browse.index') }}" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center">
+                <a href="{{ route('recipient.browse.index') }}" class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors text-sm font-medium flex items-center justify-center">
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                     </svg>
-                    Browse More Food
+                    <span class="hidden xs:inline">Browse More Food</span>
+                    <span class="xs:hidden">Browse</span>
                 </a>
-                <a href="{{ route('recipient.browse.map') }}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center">
+                <a href="{{ route('recipient.browse.map') }}" class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium flex items-center justify-center">
                     <svg class="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
                     </svg>
-                    Map View
+                    <span class="hidden xs:inline">Map View</span>
+                    <span class="xs:hidden">Map</span>
                 </a>
             </div>
         </div>
 
         <!-- Status Filter -->
         <div class="bg-white rounded-lg shadow p-4 mb-8">
-            <div class="flex flex-wrap gap-4 items-center">
-                <span class="text-sm font-medium text-gray-700">Filter by status:</span>
+            <div class="flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:items-center">
+                <span class="text-sm font-medium text-gray-700 mb-2 sm:mb-0">Filter by status:</span>
                 <div class="flex flex-wrap gap-2">
                     <a href="{{ route('recipient.matches.index') }}" 
                        class="px-3 py-1 rounded-full text-sm font-medium transition-colors {{ !request('status') ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
@@ -58,6 +61,10 @@
                        class="px-3 py-1 rounded-full text-sm font-medium transition-colors {{ request('status') === 'rejected' ? 'bg-red-600 text-white' : 'bg-red-100 text-red-700 hover:bg-red-200' }}">
                         Rejected
                     </a>
+                    <a href="{{ route('recipient.matches.index', ['status' => 'cancelled']) }}" 
+                       class="px-3 py-1 rounded-full text-sm font-medium transition-colors {{ request('status') === 'cancelled' ? 'bg-gray-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                        Cancelled
+                    </a>
                 </div>
             </div>
         </div>
@@ -67,30 +74,34 @@
             <div class="space-y-6">
                 @foreach($matches as $match)
                     <div class="bg-white rounded-lg shadow-lg overflow-hidden">
-                        <div class="p-6">
-                            <div class="flex items-start justify-between">
+                        <div class="p-4 sm:p-6">
+                            <div class="block lg:flex lg:items-start lg:justify-between">
                                 <!-- Match Details -->
                                 <div class="flex-1">
-                                    <div class="flex items-center mb-4">
-                                        <div class="w-3 h-3 rounded-full mr-3
-                                            @if($match->status === 'completed') bg-green-500
-                                            @elseif($match->status === 'approved') bg-blue-500
-                                            @elseif($match->status === 'rejected') bg-red-500
-                                            @else bg-yellow-500
-                                            @endif">
+                                    <div class="flex flex-col sm:flex-row sm:items-center mb-4 gap-2 sm:gap-3">
+                                        <div class="flex items-center">
+                                            <div class="w-3 h-3 rounded-full mr-3
+                                                @if($match->status === 'completed') bg-green-500
+                                                @elseif($match->status === 'approved') bg-blue-500
+                                                @elseif($match->status === 'rejected') bg-red-500
+                                                @elseif($match->status === 'cancelled') bg-gray-500
+                                                @else bg-yellow-500
+                                                @endif">
+                                            </div>
+                                            <h3 class="text-lg sm:text-xl font-semibold text-gray-900">{{ $match->foodListing->food_name }}</h3>
                                         </div>
-                                        <h3 class="text-xl font-semibold text-gray-900">{{ $match->foodListing->food_name }}</h3>
-                                        <span class="ml-3 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium self-start sm:self-center
                                             @if($match->status === 'completed') bg-green-100 text-green-800
                                             @elseif($match->status === 'approved') bg-blue-100 text-blue-800
                                             @elseif($match->status === 'rejected') bg-red-100 text-red-800
+                                            @elseif($match->status === 'cancelled') bg-gray-100 text-gray-800
                                             @else bg-yellow-100 text-yellow-800
                                             @endif">
                                             {{ ucfirst($match->status) }}
                                         </span>
                                     </div>
                                     
-                                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
                                         <!-- Donor Info -->
                                         <div>
                                             <p class="text-gray-500 mb-1">Donor</p>
@@ -127,7 +138,13 @@
                                                 {{ $match->foodListing->expiry_date->format('M d, Y') }}
                                             </p>
                                             @if($match->foodListing->expiry_time)
-                                                <p class="text-xs text-gray-500">{{ $match->foodListing->expiry_time->format('H:i') }}</p>
+                                                <p class="text-xs text-gray-500">
+                                                    @if(is_string($match->foodListing->expiry_time))
+                                                        {{ $match->foodListing->expiry_time }}
+                                                    @else
+                                                        {{ \Carbon\Carbon::parse($match->foodListing->expiry_time)->format('H:i') }}
+                                                    @endif
+                                                </p>
                                             @endif
                                         </div>
                                     </div>
@@ -171,48 +188,48 @@
                                 </div>
 
                                 <!-- Action Buttons -->
-                                <div class="ml-6 flex flex-col space-y-2 min-w-36">
+                                <div class="lg:ml-6 mt-4 lg:mt-0 flex flex-row lg:flex-col gap-2 lg:space-y-0 lg:min-w-36">
                                     <a href="{{ route('recipient.browse.show', $match->foodListing) }}" 
-                                       class="bg-green-600 text-white py-2 px-3 rounded-md hover:bg-green-700 transition-colors text-xs font-medium text-center">
+                                       class="flex-1 lg:flex-none bg-green-600 text-white py-2 px-3 rounded-md hover:bg-green-700 transition-colors text-xs sm:text-sm font-medium text-center">
                                         View Details
                                     </a>
                                     
                                     @if($match->status === 'pending')
-                                        <form action="{{ route('recipient.matches.cancel', $match) }}" method="POST" class="inline">
+                                        <form action="{{ route('recipient.matches.cancel', $match) }}" method="POST" class="flex-1 lg:flex-none">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" 
                                                     onclick="return confirm('Are you sure you want to cancel this match?')"
-                                                    class="w-full bg-red-600 text-white py-2 px-3 rounded-md hover:bg-red-700 transition-colors text-xs font-medium">
+                                                    class="w-full bg-red-600 text-white py-2 px-3 rounded-md hover:bg-red-700 transition-colors text-xs sm:text-sm font-medium">
                                                 Cancel Interest
                                             </button>
                                         </form>
                                     @endif
                                     
                                     @if($match->status === 'confirmed')
-                                        <form action="{{ route('recipient.matches.complete', $match) }}" method="POST" class="inline">
+                                        <form action="{{ route('recipient.matches.complete', $match) }}" method="POST" class="flex-1 lg:flex-none">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" 
-                                                    class="w-full bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors text-xs font-medium">
+                                                    class="w-full bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
                                                 Mark Completed
                                             </button>
                                         </form>
                                         
                                         @if($match->qr_code && $match->pickupVerification)
                                             <a href="{{ route('pickup.verify', $match->qr_code) }}"
-                                               class="w-full bg-gray-600 text-white py-2 px-3 rounded-md hover:bg-gray-700 transition-colors text-xs font-medium text-center block">
+                                               class="flex-1 lg:flex-none w-full bg-gray-600 text-white py-2 px-3 rounded-md hover:bg-gray-700 transition-colors text-xs sm:text-sm font-medium text-center block">
                                                 View Pickup Details
                                             </a>
                                         @endif
                                     @endif
                                     
                                     @if($match->status === 'scheduled')
-                                        <form action="{{ route('recipient.matches.complete', $match) }}" method="POST" class="inline">
+                                        <form action="{{ route('recipient.matches.complete', $match) }}" method="POST" class="flex-1 lg:flex-none">
                                             @csrf
                                             @method('PATCH')
                                             <button type="submit" 
-                                                    class="w-full bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors text-xs font-medium">
+                                                    class="w-full bg-blue-600 text-white py-2 px-3 rounded-md hover:bg-blue-700 transition-colors text-xs sm:text-sm font-medium">
                                                 Mark Completed
                                             </button>
                                         </form>
@@ -220,7 +237,7 @@
                                         <div class="text-xs text-gray-500 text-center">
                                             @if($match->pickup_scheduled_at)
                                                 Scheduled for:<br>
-                                                {{ $match->pickup_scheduled_at->format('M d, H:i') }}
+                                                {{ \Carbon\Carbon::parse($match->pickup_scheduled_at)->format('M d, H:i') }}
                                             @endif
                                         </div>
                                     @endif
@@ -244,7 +261,14 @@
                                             <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                             </svg>
-                                            Interest expressed {{ $match->matched_at ? $match->matched_at->diffForHumans() : $match->created_at->diffForHumans() }}
+                                            Interest expressed 
+                                            @if($match->matched_at && method_exists($match->matched_at, 'diffForHumans'))
+                                                {{ $match->matched_at->diffForHumans() }}
+                                            @elseif($match->created_at && method_exists($match->created_at, 'diffForHumans'))
+                                                {{ $match->created_at->diffForHumans() }}
+                                            @else
+                                                recently
+                                            @endif
                                         </div>
                                         
                                         @if($match->approved_at)
@@ -252,7 +276,12 @@
                                                 <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                                 </svg>
-                                                Approved {{ $match->approved_at->diffForHumans() }}
+                                                Approved 
+                                                @if(method_exists($match->approved_at, 'diffForHumans'))
+                                                    {{ $match->approved_at->diffForHumans() }}
+                                                @else
+                                                    {{ $match->approved_at }}
+                                                @endif
                                             </div>
                                         @endif
                                         
@@ -261,7 +290,12 @@
                                                 <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
-                                                Completed {{ $match->completed_at->diffForHumans() }}
+                                                Completed 
+                                                @if(method_exists($match->completed_at, 'diffForHumans'))
+                                                    {{ $match->completed_at->diffForHumans() }}
+                                                @else
+                                                    {{ $match->completed_at }}
+                                                @endif
                                             </div>
                                         @endif
                                     </div>
@@ -274,7 +308,7 @@
             
             <!-- Pagination -->
             <div class="mt-8">
-                {{ $matches->links() }}
+                {{ $matches->appends(request()->query())->links() }}
             </div>
         @else
             <div class="bg-white rounded-lg shadow-lg p-12">

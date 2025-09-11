@@ -19,6 +19,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Force HTTPS when using ngrok or similar tunneling services
+        if (request()->server('HTTP_X_FORWARDED_PROTO') === 'https' || 
+            request()->server('HTTP_X_FORWARDED_SSL') === 'on' ||
+            str_contains(request()->server('HTTP_HOST', ''), '.ngrok.io')) {
+            \URL::forceScheme('https');
+        }
     }
 }

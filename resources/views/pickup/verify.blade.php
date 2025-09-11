@@ -85,7 +85,7 @@
                         <div>
                             <p class="text-gray-500">Scanned At</p>
                             <p class="font-medium">
-                                {{ $verification->scanned_at ? $verification->scanned_at->format('M d, Y H:i') : 'Not scanned' }}
+                                {{ $verification->scanned_at ? \Carbon\Carbon::parse($verification->scanned_at)->format('M d, Y H:i') : 'Not scanned' }}
                             </p>
                         </div>
                     </div>
@@ -113,7 +113,7 @@
                                 </div>
                                 <div>
                                     <p class="text-gray-500">Best Before</p>
-                                    <p class="font-medium">{{ $verification->foodListing->expiry_date->format('M d, Y') }}</p>
+                                    <p class="font-medium">{{ \Carbon\Carbon::parse($verification->foodListing->expiry_date)->format('M d, Y') }}</p>
                                 </div>
                                 <div>
                                     <p class="text-gray-500">Donor</p>
@@ -258,7 +258,7 @@
                         </svg>
                         <div>
                             <h2 class="text-xl font-semibold text-green-900">Pickup Completed!</h2>
-                            <p class="text-green-700">Completed on {{ $verification->pickup_completed_at->format('M d, Y \a\t H:i') }}</p>
+                            <p class="text-green-700">Completed on {{ \Carbon\Carbon::parse($verification->pickup_completed_at)->format('M d, Y \a\t H:i') }}</p>
                         </div>
                     </div>
                     

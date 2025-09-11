@@ -26,16 +26,13 @@ class FoodMatch extends Model
         'notes',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'matched_at' => 'datetime',
-            'approved_at' => 'datetime',
-            'pickup_scheduled_at' => 'datetime',
-            'completed_at' => 'datetime',
-            'distance' => 'decimal:2',
-        ];
-    }
+    protected $casts = [
+        'matched_at' => 'datetime',
+        'approved_at' => 'datetime',
+        'pickup_scheduled_at' => 'datetime',
+        'completed_at' => 'datetime',
+        'distance' => 'decimal:2',
+    ];
 
     public function foodListing()
     {
@@ -72,7 +69,7 @@ class FoodMatch extends Model
     public function confirmPickup()
     {
         $this->update([
-            'status' => 'confirmed',
+            'status' => 'approved',
             'approved_at' => now(),
         ]);
 
@@ -111,11 +108,11 @@ class FoodMatch extends Model
 
         // Update food listing status if this was the last active match
         $activeMaches = FoodMatch::where('food_listing_id', $this->food_listing_id)
-            ->whereIn('status', ['pending', 'confirmed', 'scheduled'])
+            ->whereIn('status', ['pending', 'approved', 'scheduled', 'in_progress'])
             ->count();
 
         if ($activeMaches === 0) {
-            $this->foodListing->update(['status' => 'completed']);
+            $this->foodListing->update(['status' => 'picked_up']);
         }
 
         return $this;

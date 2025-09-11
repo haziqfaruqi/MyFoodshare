@@ -68,6 +68,11 @@ class User extends Authenticatable
         return $this->hasMany(FoodListing::class);
     }
 
+    public function matches()
+    {
+        return $this->hasMany(FoodMatch::class, 'recipient_id');
+    }
+
     public function isAdmin()
     {
         return $this->role === 'admin';

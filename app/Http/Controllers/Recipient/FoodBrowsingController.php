@@ -47,12 +47,16 @@ class FoodBrowsingController extends Controller
 
     public function show(FoodListing $listing)
     {
-        // Check if listing is approved and visible to recipients
-        if (!$listing->isVisibleToRecipients()) {
+        $user = Auth::user();
+        
+        // Check if user has existing match with this listing OR if listing is visible to recipients
+        $hasMatch = FoodMatch::where('recipient_id', $user->id)
+            ->where('food_listing_id', $listing->id)
+            ->exists();
+        
+        if (!$hasMatch && !$listing->isVisibleToRecipients()) {
             abort(404, 'Food listing not available.');
         }
-        
-        $user = Auth::user();
         
         // Calculate distance if both have coordinates
         $distance = null;
@@ -112,14 +116,19 @@ class FoodBrowsingController extends Controller
         return redirect()->back()->with('success', 'Interest expressed successfully! The donor will be notified.');
     }
 
-    public function myMatches()
+    public function myMatches(Request $request)
     {
         $user = Auth::user();
         
-        $matches = FoodMatch::with(['foodListing.user'])
-            ->where('recipient_id', $user->id)
-            ->latest()
-            ->paginate(12);
+        $query = FoodMatch::with(['foodListing.user'])
+            ->where('recipient_id', $user->id);
+            
+        // Filter by status if provided
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+        
+        $matches = $query->latest()->paginate(12);
 
         return view('recipient.matches.index', compact('matches'));
     }

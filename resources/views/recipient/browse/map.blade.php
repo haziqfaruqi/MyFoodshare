@@ -46,17 +46,7 @@
             <div class="lg:col-span-2">
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden">
                     <div id="map" class="w-full h-96" style="min-height: 600px;">
-                        <!-- Placeholder for map -->
-                        <div class="w-full h-full flex items-center justify-center bg-gray-100">
-                            <div class="text-center">
-                                <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-                                </svg>
-                                <h3 class="mt-4 text-lg font-medium text-gray-900">Interactive Map</h3>
-                                <p class="mt-2 text-sm text-gray-500">Google Maps integration would be displayed here</p>
-                                <p class="mt-1 text-xs text-gray-400">Showing {{ $listings->count() }} food locations within {{ $radius }}km</p>
-                            </div>
-                        </div>
+                        <!-- Map will be loaded here -->
                     </div>
                 </div>
             </div>
@@ -160,28 +150,199 @@
     </div>
 </div>
 
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 <script>
-// Placeholder JavaScript for map functionality
-// In a real implementation, you would integrate with Google Maps API or similar
-function focusMapLocation(lat, lng) {
-    console.log('Focusing on location:', lat, lng);
-    // This would center the map on the selected listing
-    
-    // Highlight the selected listing
-    document.querySelectorAll('[data-listing-id]').forEach(el => {
-        el.classList.remove('bg-green-50', 'border-green-200');
-    });
-    event.currentTarget.classList.add('bg-green-50', 'border-green-200');
-}
+let map;
+let markers = [];
+let userMarker = null;
 
 // Initialize map when page loads
 document.addEventListener('DOMContentLoaded', function() {
-    // This is where you would initialize your map
-    console.log('Map would be initialized here');
-    
-    // Sample data for demonstration
-    const listings = @json($listings->toArray());
-    console.log('Listings for map:', listings);
+    initMap();
 });
+
+function initMap() {
+    try {
+        const listings = @json($listings->values());
+        const userLocation = [{{ auth()->user()->latitude ?? 3.1390 }}, {{ auth()->user()->longitude ?? 101.6869 }}];
+
+        // Initialize the map
+        map = L.map('map').setView(userLocation, 12);
+
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19,
+        }).addTo(map);
+
+        // Custom icons
+        const userIcon = L.divIcon({
+            html: `<div class="w-6 h-6 bg-blue-500 border-2 border-white rounded-full shadow-lg"></div>`,
+            className: 'custom-div-icon',
+            iconSize: [24, 24],
+            iconAnchor: [12, 12]
+        });
+
+        const foodIcon = L.divIcon({
+            html: `<div class="w-8 h-8 bg-green-500 border-2 border-white rounded-full shadow-lg flex items-center justify-center">
+                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                       <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"/>
+                     </svg>
+                   </div>`,
+            className: 'custom-div-icon',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+
+        const interestedIcon = L.divIcon({
+            html: `<div class="w-8 h-8 bg-yellow-500 border-2 border-white rounded-full shadow-lg flex items-center justify-center">
+                     <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+                     </svg>
+                   </div>`,
+            className: 'custom-div-icon',
+            iconSize: [32, 32],
+            iconAnchor: [16, 16]
+        });
+
+        // Add user location marker
+        userMarker = L.marker(userLocation, { icon: userIcon })
+            .addTo(map)
+            .bindPopup('<div class="text-center"><strong>Your Location</strong></div>');
+
+        // Add markers for each food listing
+        listings.forEach(listing => {
+            if (listing.latitude && listing.longitude) {
+                addMarker(listing, foodIcon, interestedIcon);
+            }
+        });
+
+        // Auto-fit map to show all markers if there are any listings
+        if (markers.length > 0) {
+            const group = new L.featureGroup([...markers, userMarker]);
+            map.fitBounds(group.getBounds().pad(0.1));
+            
+            // Set max zoom
+            if (map.getZoom() > 15) {
+                map.setZoom(15);
+            }
+        }
+
+    } catch (error) {
+        console.error('Error initializing map:', error);
+        showMapError();
+    }
+}
+
+function addMarker(listing, foodIcon, interestedIcon) {
+    const position = [parseFloat(listing.latitude), parseFloat(listing.longitude)];
+    
+    // Check if user has shown interest
+    const hasInterest = listing.matches && listing.matches.some(match => 
+        match.recipient_id === {{ auth()->id() }}
+    );
+    
+    const icon = hasInterest ? interestedIcon : foodIcon;
+    
+    const marker = L.marker(position, { icon: icon }).addTo(map);
+
+    // Create popup content
+    const popupContent = `
+        <div class="p-2 max-w-xs">
+            <h3 class="font-semibold text-gray-900 mb-1">${listing.food_name}</h3>
+            <p class="text-sm text-gray-600 mb-2">${listing.user?.name || 'Unknown donor'}</p>
+            <p class="text-sm text-green-600 font-medium mb-2">${listing.quantity} ${listing.unit}</p>
+            <p class="text-xs text-gray-500 mb-2">${listing.pickup_location}</p>
+            <p class="text-xs text-gray-500 mb-3">Expires: ${new Date(listing.expiry_date).toLocaleDateString()}</p>
+            <div class="flex space-x-2">
+                <a href="/recipient/browse/${listing.id}" 
+                   class="bg-green-600 text-white px-3 py-1 rounded text-xs hover:bg-green-700 transition-colors">
+                    View Details
+                </a>
+                ${hasInterest ? 
+                    '<span class="bg-gray-100 text-gray-500 px-3 py-1 rounded text-xs">Interested</span>' :
+                    `<form action="/recipient/browse/${listing.id}/express-interest" method="POST" class="inline">
+                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="bg-blue-600 text-white px-3 py-1 rounded text-xs hover:bg-blue-700 transition-colors">
+                            Express Interest
+                        </button>
+                    </form>`
+                }
+            </div>
+        </div>
+    `;
+
+    marker.bindPopup(popupContent);
+    
+    // Add click event to highlight sidebar item
+    marker.on('click', function() {
+        highlightListingCard(listing.id);
+    });
+
+    // Store listing ID with marker for later reference
+    marker.listingId = listing.id;
+    markers.push(marker);
+}
+
+function focusMapLocation(lat, lng) {
+    if (map) {
+        const position = [parseFloat(lat), parseFloat(lng)];
+        map.setView(position, 16);
+        
+        // Find and open popup for the corresponding marker
+        const marker = markers.find(m => {
+            const markerPos = m.getLatLng();
+            return Math.abs(markerPos.lat - lat) < 0.0001 && Math.abs(markerPos.lng - lng) < 0.0001;
+        });
+        
+        if (marker) {
+            marker.openPopup();
+        }
+    }
+    
+    // Highlight the selected listing in sidebar
+    highlightListingCard(event.currentTarget.dataset.listingId);
+}
+
+function highlightListingCard(listingId) {
+    document.querySelectorAll('[data-listing-id]').forEach(el => {
+        el.classList.remove('bg-green-50', 'border-green-200');
+    });
+    
+    const targetCard = document.querySelector(`[data-listing-id="${listingId}"]`);
+    if (targetCard) {
+        targetCard.classList.add('bg-green-50', 'border-green-200');
+        targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+}
+
+function showMapError() {
+    document.getElementById('map').innerHTML = `
+        <div class="w-full h-full flex items-center justify-center bg-gray-100">
+            <div class="text-center">
+                <svg class="mx-auto h-16 w-16 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <h3 class="mt-4 text-lg font-medium text-gray-900">Map Not Available</h3>
+                <p class="mt-2 text-sm text-gray-500">Unable to load map</p>
+                <p class="mt-1 text-xs text-gray-400">Showing {{ $listings->count() }} food locations within {{ $radius }}km</p>
+            </div>
+        </div>
+    `;
+}
+
+// Add custom CSS for markers
+document.head.insertAdjacentHTML('beforeend', `
+    <style>
+        .custom-div-icon {
+            background: none !important;
+            border: none !important;
+        }
+    </style>
+`);
 </script>
 @endsection

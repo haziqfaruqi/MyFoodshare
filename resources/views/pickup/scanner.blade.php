@@ -8,6 +8,13 @@
     width: 100%;
     max-width: 500px;
     margin: 0 auto;
+    min-height: 300px;
+}
+
+#qr-reader video {
+    width: 100% !important;
+    height: auto !important;
+    object-fit: cover;
 }
 
 .scanner-container {
@@ -149,7 +156,7 @@
                     <div class="flex space-x-3">
                         <input type="text" 
                                id="manual-code" 
-                               placeholder="VRF-XXXXXXXX"
+                               placeholder="VRF-XXXXXXXX or 8-digit code"
                                class="flex-1 border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
                         <button onclick="processManualCode()" 
                                 class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition-colors font-medium">
@@ -187,30 +194,76 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeScanner() {
+    // Check for HTTPS
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+        showStatus('Camera access requires HTTPS. Please use the HTTPS ngrok URL.', 'error');
+        return;
+    }
+
     // Check for camera support
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         showStatus('Camera not supported on this device. Please use manual code entry.', 'error');
         return;
     }
 
-    // Request camera permission and start scanner
-    Html5Qrcode.getCameras().then(devices => {
-        if (devices && devices.length) {
-            startScanner(devices[0].id);
-        } else {
-            showStatus('No cameras found. Please use manual code entry.', 'error');
-        }
-    }).catch(err => {
-        console.error('Error getting cameras:', err);
-        showStatus('Camera access denied. Please use manual code entry.', 'error');
-    });
+    // First request camera permission explicitly
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+            // Stop the test stream
+            stream.getTracks().forEach(track => track.stop());
+            
+            // Now get available cameras
+            return Html5Qrcode.getCameras();
+        })
+        .then(devices => {
+            if (devices && devices.length) {
+                // Prefer back camera for mobile
+                let cameraId = devices[0].id;
+                const backCamera = devices.find(device => 
+                    device.label.toLowerCase().includes('back') || 
+                    device.label.toLowerCase().includes('rear') ||
+                    device.label.toLowerCase().includes('environment')
+                );
+                if (backCamera) {
+                    cameraId = backCamera.id;
+                }
+                startScanner(cameraId);
+            } else {
+                showStatus('No cameras found. Please use manual code entry.', 'error');
+            }
+        })
+        .catch(err => {
+            console.error('Error getting camera access:', err);
+            let message = 'Camera access denied. ';
+            if (err.name === 'NotAllowedError') {
+                message += 'Please allow camera access in your browser settings and refresh the page.';
+            } else if (err.name === 'NotFoundError') {
+                message += 'No camera found on this device.';
+            } else {
+                message += 'Please use manual code entry.';
+            }
+            showStatus(message, 'error');
+        });
 }
 
 function startScanner(cameraId) {
     const config = {
         fps: 10,
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0
+        qrbox: function(viewfinderWidth, viewfinderHeight) {
+            // Make QR box responsive
+            let minEdgePercentage = 0.7;
+            let minEdgeSize = Math.min(viewfinderWidth, viewfinderHeight);
+            let qrboxSize = Math.floor(minEdgeSize * minEdgePercentage);
+            return {
+                width: qrboxSize,
+                height: qrboxSize
+            };
+        },
+        aspectRatio: 1.0,
+        // Use back camera on mobile
+        videoConstraints: {
+            facingMode: 'environment'
+        }
     };
 
     html5QrcodeScanner = new Html5Qrcode("qr-reader");
@@ -224,7 +277,15 @@ function startScanner(cameraId) {
         })
         .catch(err => {
             console.error('Error starting scanner:', err);
-            showStatus('Failed to start camera. Please use manual code entry.', 'error');
+            let message = 'Failed to start camera. ';
+            if (err.toString().includes('NotAllowedError')) {
+                message += 'Camera permission denied. Please allow camera access and refresh.';
+            } else if (err.toString().includes('NotFoundError')) {
+                message += 'Camera not found or not accessible.';
+            } else {
+                message += 'Please use manual code entry.';
+            }
+            showStatus(message, 'error');
         });
 }
 
@@ -248,22 +309,109 @@ function onScanFailure(error) {
 function processQrCode(qrData) {
     showStatus('Processing QR code...', 'info');
     
+    console.log('QR Data received:', qrData);
+    
     // Extract verification code from QR data
     let verificationCode;
+    let isPickupVerification = false;
     
+    // Handle PickupVerification QR codes (VRF-XXXXXXXX format)
     if (qrData.includes('/pickup/verify/')) {
-        // Extract from URL
         const parts = qrData.split('/');
         verificationCode = parts[parts.length - 1];
+        isPickupVerification = true;
     } else if (qrData.match(/^VRF-[A-Z0-9]{8}$/)) {
-        // Direct code format
         verificationCode = qrData;
-    } else {
+        isPickupVerification = true;
+    }
+    // Handle FoodListing QR codes (old format)
+    else if (qrData.includes('/food-listing/verify/')) {
+        // Extract listing ID and code from URL: /food-listing/verify/{id}/{code}
+        const urlParts = qrData.split('/');
+        const listingId = urlParts[urlParts.length - 2];
+        const listingCode = urlParts[urlParts.length - 1];
+        
+        // Convert to pickup verification by creating one
+        createPickupVerificationFromListing(listingId, listingCode);
+        return;
+    }
+    // Handle direct 8-character codes (FoodListing format)
+    else if (qrData.match(/^[A-Z0-9]{8}$/)) {
+        // This might be a FoodListing verification code
+        // We need to find which listing this belongs to
+        findListingByCode(qrData);
+        return;
+    }
+    else {
         showStatus('Invalid QR code format. Please try again or use manual entry.', 'error');
         restartScanner();
         return;
     }
 
+    if (isPickupVerification) {
+        // Handle pickup verification codes
+        handlePickupVerification(verificationCode);
+    }
+}
+
+function createPickupVerificationFromListing(listingId, listingCode) {
+    showStatus('Creating pickup verification...', 'info');
+    
+    fetch('/api/create-pickup-verification', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({
+            listing_id: listingId,
+            listing_code: listingCode
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            handlePickupVerification(data.verification_code);
+        } else {
+            showStatus(data.error || 'Failed to create pickup verification.', 'error');
+            restartScanner();
+        }
+    })
+    .catch(error => {
+        console.error('Error creating verification:', error);
+        showStatus('Network error. Please try again.', 'error');
+        restartScanner();
+    });
+}
+
+function findListingByCode(code) {
+    showStatus('Looking up QR code...', 'info');
+    
+    fetch('/api/find-listing-by-code', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ code: code })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            createPickupVerificationFromListing(data.listing_id, code);
+        } else {
+            showStatus(data.error || 'QR code not found or invalid.', 'error');
+            restartScanner();
+        }
+    })
+    .catch(error => {
+        console.error('Error finding listing:', error);
+        showStatus('Network error. Please try again.', 'error');
+        restartScanner();
+    });
+}
+
+function handlePickupVerification(verificationCode) {
     // Get location data
     getCurrentLocation().then(locationData => {
         // Send scan request
@@ -298,8 +446,9 @@ function processQrCode(qrData) {
 function processManualCode() {
     const code = document.getElementById('manual-code').value.trim().toUpperCase();
     
-    if (!code.match(/^VRF-[A-Z0-9]{8}$/)) {
-        showStatus('Invalid code format. Code should be VRF-XXXXXXXX', 'error');
+    // Accept both VRF-XXXXXXXX and 8-character codes
+    if (!code.match(/^VRF-[A-Z0-9]{8}$/) && !code.match(/^[A-Z0-9]{8}$/)) {
+        showStatus('Invalid code format. Code should be VRF-XXXXXXXX or 8-character code', 'error');
         return;
     }
     
