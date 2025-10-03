@@ -235,7 +235,7 @@ flowchart TD
     K --> H
 
     B -->|QR Code Scanned| L[Broadcast: QrCodeScanned Event]
-    L --> M[Restaurant Channel:<br/>private-restaurant.{id}]
+    L --> M[Restaurant Channel:<br/>private-restaurant-userid]
     M --> N[Restaurant Dashboard<br/>Shows Real-time Update]
 
     B -->|Pickup Completed| O[PickupCompletedNotification]
@@ -243,7 +243,7 @@ flowchart TD
     P --> Q[Broadcast: PickupCompleted Event]
     Q --> M
 
-    F --> R[User Channels:<br/>private-user.{id}]
+    F --> R[User Channels:<br/>private-user-userid]
     J --> R
     R --> S[User Receives Notification<br/>- In-app Alert<br/>- Optional: FCM Push]
 ```
