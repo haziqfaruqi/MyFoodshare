@@ -1,182 +1,189 @@
 # MyFoodshare Use Case Diagram
 
-## System Use Case Diagram
+## System Use Case Diagram (Vertical Layout)
 
 ```mermaid
-graph TB
-    subgraph System["MyFoodshare System"]
-        subgraph Authentication["Authentication & Authorization"]
-            UC1[Register Account]
-            UC2[Login]
-            UC3[Logout]
-            UC4[Reset Password]
+graph LR
+    %% Left Side Actors
+    Guest((Guest<br/>User))
+    Restaurant((Restaurant<br/>Donor))
+    Recipient((Recipient<br/>NGO))
+
+    %% Right Side Actors
+    Admin((Administrator))
+    SystemAuto((System<br/>Automated))
+
+    subgraph System[" MyFoodshare System "]
+        direction TB
+
+        subgraph Auth["🔐 Authentication & Authorization"]
+            direction TB
+            UC1((UC1<br/>Register))
+            UC2((UC2<br/>Login))
+            UC3((UC3<br/>Logout))
+            UC4((UC4<br/>Reset<br/>Password))
         end
 
-        subgraph RestaurantUseCases["Restaurant/Donor Use Cases"]
-            UC5[Create Food Listing]
-            UC6[Edit Food Listing]
-            UC7[Delete Food Listing]
-            UC8[View My Listings]
-            UC9[Review Match Requests]
-            UC10[Approve Match]
-            UC11[Reject Match]
-            UC12[Schedule Pickup Time]
-            UC13[View Pickup Verifications]
-            UC14[Generate QR Code]
-            UC15[View Impact Statistics]
-            UC16[View Donation Reports]
-            UC17[Track Donation Progress]
-            UC18[Manage Profile]
+        subgraph RestUC["🍽️ Restaurant/Donor"]
+            direction TB
+            UC5((UC5<br/>Create<br/>Listing))
+            UC6((UC6<br/>Edit<br/>Listing))
+            UC7((UC7<br/>Delete<br/>Listing))
+            UC8((UC8<br/>View<br/>Listings))
+            UC9((UC9<br/>Review<br/>Matches))
+            UC10((UC10<br/>Approve<br/>Match))
+            UC11((UC11<br/>Reject<br/>Match))
+            UC12((UC12<br/>Schedule<br/>Pickup))
+            UC13((UC13<br/>View<br/>Verifications))
+            UC14((UC14<br/>Generate<br/>QR))
+            UC15((UC15<br/>View<br/>Impact))
+            UC16((UC16<br/>View<br/>Reports))
+            UC17((UC17<br/>Track<br/>Progress))
+            UC18((UC18<br/>Manage<br/>Profile))
         end
 
-        subgraph RecipientUseCases["Recipient/NGO Use Cases"]
-            UC19[Browse Food Listings]
-            UC20[Search Food Listings]
-            UC21[Filter by Category]
-            UC22[Filter by Location]
-            UC23[View Listing Details]
-            UC24[Express Interest]
-            UC25[View My Matches]
-            UC26[View Pickup Schedule]
-            UC27[Scan QR Code]
-            UC28[Verify Pickup]
-            UC29[Complete Pickup]
-            UC30[Rate Food Quality]
-            UC31[View Received Donations]
-            UC32[Manage Profile]
+        subgraph RecipUC["🎯 Recipient/NGO"]
+            direction TB
+            UC19((UC19<br/>Browse<br/>Listings))
+            UC20((UC20<br/>Search<br/>Listings))
+            UC21((UC21<br/>Filter<br/>Category))
+            UC22((UC22<br/>Filter<br/>Location))
+            UC23((UC23<br/>View<br/>Details))
+            UC24((UC24<br/>Express<br/>Interest))
+            UC25((UC25<br/>View<br/>Matches))
+            UC26((UC26<br/>View<br/>Schedule))
+            UC27((UC27<br/>Scan<br/>QR))
+            UC28((UC28<br/>Verify<br/>Pickup))
+            UC29((UC29<br/>Complete<br/>Pickup))
+            UC30((UC30<br/>Rate<br/>Quality))
+            UC31((UC31<br/>View<br/>Donations))
+            UC32((UC32<br/>Manage<br/>Profile))
         end
 
-        subgraph AdminUseCases["Admin Use Cases"]
-            UC33[Approve User Registration]
-            UC34[Reject User Registration]
-            UC35[View All Users]
-            UC36[Manage Users]
-            UC37[View All Listings]
-            UC38[Monitor Food Matches]
-            UC39[View Pickup Verifications]
-            UC40[Handle Disputed Pickups]
-            UC41[View System Analytics]
-            UC42[View Monthly Trends]
-            UC43[View Geographic Distribution]
-            UC44[Generate Reports]
-            UC45[Manage System Settings]
+        subgraph AdminUC["⚙️ Administrator"]
+            direction TB
+            UC33((UC33<br/>Approve<br/>User))
+            UC34((UC34<br/>Reject<br/>User))
+            UC35((UC35<br/>View<br/>Users))
+            UC36((UC36<br/>Manage<br/>Users))
+            UC37((UC37<br/>View<br/>Listings))
+            UC38((UC38<br/>Monitor<br/>Matches))
+            UC39((UC39<br/>View<br/>Verifications))
+            UC40((UC40<br/>Handle<br/>Disputes))
+            UC41((UC41<br/>System<br/>Analytics))
+            UC42((UC42<br/>Monthly<br/>Trends))
+            UC43((UC43<br/>Geographic<br/>Data))
+            UC44((UC44<br/>Generate<br/>Reports))
+            UC45((UC45<br/>System<br/>Settings))
         end
 
-        subgraph NotificationUseCases["Notification Use Cases"]
-            UC46[Receive Email Notifications]
-            UC47[Receive In-App Notifications]
-            UC48[Receive Push Notifications]
-            UC49[View Notification History]
-        end
-
-        subgraph ReportingUseCases["Reporting & Analytics"]
-            UC50[View Dashboard Statistics]
-            UC51[Export Data]
-            UC52[View Activity Logs]
-            UC53[Track Environmental Impact]
+        subgraph NotifyUC["🔔 Notifications & Reports"]
+            direction TB
+            UC46((UC46<br/>Email<br/>Notify))
+            UC47((UC47<br/>In-App<br/>Notify))
+            UC48((UC48<br/>Push<br/>Notify))
+            UC49((UC49<br/>Notification<br/>History))
+            UC50((UC50<br/>Dashboard<br/>Stats))
+            UC51((UC51<br/>Export<br/>Data))
+            UC52((UC52<br/>Activity<br/>Logs))
+            UC53((UC53<br/>Environmental<br/>Impact))
         end
     end
 
-    %% Actors
-    Guest[Guest User]
-    Restaurant[Restaurant/Donor]
-    Recipient[Recipient/NGO]
-    Admin[Administrator]
-    System_Auto[System Automated]
-
     %% Guest Relationships
-    Guest --> UC1
-    Guest --> UC2
+    Guest -.-> UC1
+    Guest -.-> UC2
 
     %% Restaurant Relationships
-    Restaurant --> UC2
-    Restaurant --> UC3
-    Restaurant --> UC4
-    Restaurant --> UC5
-    Restaurant --> UC6
-    Restaurant --> UC7
-    Restaurant --> UC8
-    Restaurant --> UC9
-    Restaurant --> UC10
-    Restaurant --> UC11
-    Restaurant --> UC12
-    Restaurant --> UC13
-    Restaurant --> UC14
-    Restaurant --> UC15
-    Restaurant --> UC16
-    Restaurant --> UC17
-    Restaurant --> UC18
-    Restaurant --> UC47
-    Restaurant --> UC48
-    Restaurant --> UC49
-    Restaurant --> UC50
-    Restaurant --> UC52
+    Restaurant -.-> UC2
+    Restaurant -.-> UC3
+    Restaurant -.-> UC4
+    Restaurant -.-> UC5
+    Restaurant -.-> UC6
+    Restaurant -.-> UC7
+    Restaurant -.-> UC8
+    Restaurant -.-> UC9
+    Restaurant -.-> UC10
+    Restaurant -.-> UC11
+    Restaurant -.-> UC12
+    Restaurant -.-> UC13
+    Restaurant -.-> UC14
+    Restaurant -.-> UC15
+    Restaurant -.-> UC16
+    Restaurant -.-> UC17
+    Restaurant -.-> UC18
+    Restaurant -.-> UC47
+    Restaurant -.-> UC48
+    Restaurant -.-> UC49
+    Restaurant -.-> UC50
+    Restaurant -.-> UC52
 
     %% Recipient Relationships
-    Recipient --> UC2
-    Recipient --> UC3
-    Recipient --> UC4
-    Recipient --> UC19
-    Recipient --> UC20
-    Recipient --> UC21
-    Recipient --> UC22
-    Recipient --> UC23
-    Recipient --> UC24
-    Recipient --> UC25
-    Recipient --> UC26
-    Recipient --> UC27
-    Recipient --> UC28
-    Recipient --> UC29
-    Recipient --> UC30
-    Recipient --> UC31
-    Recipient --> UC32
-    Recipient --> UC47
-    Recipient --> UC48
-    Recipient --> UC49
-    Recipient --> UC50
+    Recipient -.-> UC2
+    Recipient -.-> UC3
+    Recipient -.-> UC4
+    Recipient -.-> UC19
+    Recipient -.-> UC20
+    Recipient -.-> UC21
+    Recipient -.-> UC22
+    Recipient -.-> UC23
+    Recipient -.-> UC24
+    Recipient -.-> UC25
+    Recipient -.-> UC26
+    Recipient -.-> UC27
+    Recipient -.-> UC28
+    Recipient -.-> UC29
+    Recipient -.-> UC30
+    Recipient -.-> UC31
+    Recipient -.-> UC32
+    Recipient -.-> UC47
+    Recipient -.-> UC48
+    Recipient -.-> UC49
+    Recipient -.-> UC50
 
     %% Admin Relationships
-    Admin --> UC2
-    Admin --> UC3
-    Admin --> UC33
-    Admin --> UC34
-    Admin --> UC35
-    Admin --> UC36
-    Admin --> UC37
-    Admin --> UC38
-    Admin --> UC39
-    Admin --> UC40
-    Admin --> UC41
-    Admin --> UC42
-    Admin --> UC43
-    Admin --> UC44
-    Admin --> UC45
-    Admin --> UC47
-    Admin --> UC49
-    Admin --> UC52
+    UC2 -.-> Admin
+    UC3 -.-> Admin
+    UC33 -.-> Admin
+    UC34 -.-> Admin
+    UC35 -.-> Admin
+    UC36 -.-> Admin
+    UC37 -.-> Admin
+    UC38 -.-> Admin
+    UC39 -.-> Admin
+    UC40 -.-> Admin
+    UC41 -.-> Admin
+    UC42 -.-> Admin
+    UC43 -.-> Admin
+    UC44 -.-> Admin
+    UC45 -.-> Admin
+    UC47 -.-> Admin
+    UC49 -.-> Admin
+    UC52 -.-> Admin
 
     %% System Automated
-    System_Auto --> UC46
-    System_Auto --> UC47
-    System_Auto --> UC48
-    System_Auto --> UC53
+    UC46 -.-> SystemAuto
+    UC47 -.-> SystemAuto
+    UC48 -.-> SystemAuto
+    UC53 -.-> SystemAuto
 
-    %% Use Case Dependencies and Includes
-    UC5 -.->|includes| UC52
-    UC10 -.->|includes| UC12
+    %% Dependencies
+    UC5 -->|includes| UC52
+    UC10 -->|includes| UC12
+    UC29 -->|includes| UC30
     UC10 -.->|triggers| UC47
     UC24 -.->|triggers| UC47
-    UC29 -.->|includes| UC30
-    UC29 -.->|includes| UC52
     UC33 -.->|triggers| UC46
     UC34 -.->|triggers| UC46
 
-    classDef actorClass fill:#e1f5ff,stroke:#01579b,stroke-width:2px
-    classDef useCaseClass fill:#fff9c4,stroke:#f57f17,stroke-width:2px
-    classDef systemClass fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    %% Styling
+    classDef actorStyle fill:#4A90E2,stroke:#2E5C8A,stroke-width:3px,color:#fff
+    classDef useCaseStyle fill:#FFF9C4,stroke:#F57F17,stroke-width:2px
+    classDef systemBg fill:#E8EAF6,stroke:#3F51B5,stroke-width:2px
 
-    class Guest,Restaurant,Recipient,Admin,System_Auto actorClass
-    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10,UC11,UC12,UC13,UC14,UC15,UC16,UC17,UC18,UC19,UC20,UC21,UC22,UC23,UC24,UC25,UC26,UC27,UC28,UC29,UC30,UC31,UC32,UC33,UC34,UC35,UC36,UC37,UC38,UC39,UC40,UC41,UC42,UC43,UC44,UC45,UC46,UC47,UC48,UC49,UC50,UC51,UC52,UC53 useCaseClass
+    class Guest,Restaurant,Recipient,Admin,SystemAuto actorStyle
+    class UC1,UC2,UC3,UC4,UC5,UC6,UC7,UC8,UC9,UC10,UC11,UC12,UC13,UC14,UC15,UC16,UC17,UC18,UC19,UC20,UC21,UC22,UC23,UC24,UC25,UC26,UC27,UC28,UC29,UC30,UC31,UC32,UC33,UC34,UC35,UC36,UC37,UC38,UC39,UC40,UC41,UC42,UC43,UC44,UC45,UC46,UC47,UC48,UC49,UC50,UC51,UC52,UC53 useCaseStyle
+    class System systemBg
 ```
 
 ## Detailed Use Case Descriptions
