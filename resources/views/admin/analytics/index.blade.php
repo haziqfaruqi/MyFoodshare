@@ -105,51 +105,6 @@
             </div>
         </div>
 
-        <!-- Recent Activity -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="px-6 py-4 border-b border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900">Recent System Activity</h3>
-            </div>
-            
-            @if($recentActivities->count() > 0)
-                <div class="divide-y divide-gray-200">
-                    @foreach($recentActivities as $activity)
-                        <div class="px-6 py-4 flex items-center justify-between">
-                            <div class="flex items-center">
-                                <div class="h-8 w-8 rounded-full flex items-center justify-center
-                                    @if($activity['status'] === 'success') bg-green-100 text-green-600
-                                    @elseif($activity['status'] === 'warning') bg-yellow-100 text-yellow-600
-                                    @else bg-blue-100 text-blue-600
-                                    @endif">
-                                    @if($activity['status'] === 'success')
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                        </svg>
-                                    @elseif($activity['status'] === 'warning')
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                                        </svg>
-                                    @else
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    @endif
-                                </div>
-                                <div class="ml-3">
-                                    <div class="text-sm font-medium text-gray-900">{{ $activity['user'] }}</div>
-                                    <div class="text-sm text-gray-500">{{ $activity['action'] }}</div>
-                                </div>
-                            </div>
-                            <div class="text-sm text-gray-500">{{ $activity['time'] }}</div>
-                        </div>
-                    @endforeach
-                </div>
-            @else
-                <div class="p-8 text-center">
-                    <div class="text-gray-500">No recent activity to display</div>
-                </div>
-            @endif
-        </div>
     </div>
 </div>
 

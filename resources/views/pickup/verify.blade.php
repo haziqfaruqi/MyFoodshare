@@ -1,470 +1,339 @@
 @extends('layouts.app')
 
-@section('title', 'Verify Pickup - MyFoodshare')
-
-@push('head')
-<style>
-.rating-stars {
-    display: flex;
-    gap: 4px;
-}
-
-.rating-star {
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    fill: #d1d5db;
-    transition: fill 0.2s;
-}
-
-.rating-star:hover,
-.rating-star.active {
-    fill: #fbbf24;
-}
-
-.photo-preview {
-    max-width: 150px;
-    max-height: 150px;
-    object-fit: cover;
-    border-radius: 8px;
-}
-</style>
-@endpush
-
-@section('navbar')
-@if(auth()->user()->role === 'donor')
-    @include('layouts.restaurant')
-@elseif(auth()->user()->role === 'recipient')  
-    @include('layouts.recipient')
-@else
-    @include('layouts.admin')
-@endif
-@endsection
-
 @section('content')
-<div class="min-h-screen bg-gray-50 py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <div class="flex items-center justify-center mb-4">
-                <svg class="h-12 w-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-            </div>
-            <h1 class="text-3xl font-bold text-gray-900">Pickup Verification</h1>
-            <p class="text-gray-600 mt-2">
-                @if($verification->verification_status === 'verified')
-                    Complete your pickup and confirm receipt
-                @else
-                    Scan successful! Please complete the verification
-                @endif
-            </p>
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-lg mx-auto bg-white rounded-lg shadow-md p-6">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-gray-800">Food Pickup Verification</h1>
+            <p class="text-gray-600 mt-2">Scan QR code to verify pickup</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Food Details -->
-            <div class="lg:col-span-2 space-y-6">
-                <!-- Verification Status -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <div class="flex items-center justify-between mb-4">
-                        <h2 class="text-xl font-semibold text-gray-900">Verification Details</h2>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                            @if($verification->verification_status === 'verified') bg-green-100 text-green-800
-                            @elseif($verification->verification_status === 'pending') bg-yellow-100 text-yellow-800
-                            @else bg-gray-100 text-gray-800
-                            @endif">
-                            {{ ucfirst($verification->verification_status) }}
-                        </span>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                            <p class="text-gray-500">Verification Code</p>
-                            <p class="font-mono font-medium">{{ $verification->verification_code }}</p>
-                        </div>
-                        <div>
-                            <p class="text-gray-500">Scanned At</p>
-                            <p class="font-medium">
-                                {{ $verification->scanned_at ? \Carbon\Carbon::parse($verification->scanned_at)->format('M d, Y H:i') : 'Not scanned' }}
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Food Item Details -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Food Item Details</h2>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-4">
-                            <div>
-                                <h3 class="text-lg font-medium text-gray-900">{{ $verification->foodListing->food_name }}</h3>
-                                <p class="text-gray-600">{{ $verification->foodListing->description }}</p>
-                            </div>
-                            
-                            <div class="grid grid-cols-2 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-500">Category</p>
-                                    <p class="font-medium">{{ ucfirst($verification->foodListing->category) }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500">Quantity</p>
-                                    <p class="font-medium">{{ $verification->foodListing->quantity }} {{ $verification->foodListing->unit }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500">Best Before</p>
-                                    <p class="font-medium">{{ \Carbon\Carbon::parse($verification->foodListing->expiry_date)->format('M d, Y') }}</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-500">Donor</p>
-                                    <p class="font-medium">{{ $verification->donor->name }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        @if($verification->foodListing->images && count($verification->foodListing->images) > 0)
-                        <div>
-                            <p class="text-gray-500 mb-2">Food Images</p>
-                            <div class="grid grid-cols-2 gap-2">
-                                @foreach(array_slice($verification->foodListing->images, 0, 4) as $image)
-                                <img src="{{ asset('storage/' . $image) }}" 
-                                     alt="Food image" 
-                                     class="w-full h-20 object-cover rounded-lg">
-                                @endforeach
-                            </div>
-                        </div>
-                        @endif
-                    </div>
-
-                    @if($verification->foodListing->special_instructions)
-                    <div class="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <div class="flex items-start">
-                            <svg class="h-4 w-4 text-yellow-600 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
-                            </svg>
-                            <div>
-                                <p class="text-sm font-medium text-yellow-800">Special Instructions</p>
-                                <p class="text-sm text-yellow-700">{{ $verification->foodListing->special_instructions }}</p>
-                            </div>
-                        </div>
-                    </div>
-                    @endif
-                </div>
-
-                <!-- Pickup Completion Form -->
-                @if($verification->verification_status === 'verified' && !$verification->pickup_completed_at)
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Complete Pickup</h2>
-                    
-                    <form action="{{ route('pickup.verification.complete', $verification) }}" method="POST" enctype="multipart/form-data">
-                        @csrf
-                        
-                        <div class="space-y-6">
-                            <!-- Quantity Received -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Quantity Received</label>
-                                <select name="quantity_received" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                    <option value="">Select quantity received</option>
-                                    <option value="full">Full quantity ({{ $verification->foodListing->quantity }} {{ $verification->foodListing->unit }})</option>
-                                    <option value="partial">Partial quantity</option>
-                                    <option value="none">No food received</option>
-                                </select>
-                            </div>
-
-                            <!-- Condition -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Food Condition</label>
-                                <select name="condition" required class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                    <option value="">Select condition</option>
-                                    <option value="excellent">Excellent - Perfect condition</option>
-                                    <option value="good">Good - Minor imperfections</option>
-                                    <option value="fair">Fair - Some issues but still usable</option>
-                                    <option value="poor">Poor - Significant quality issues</option>
-                                </select>
-                            </div>
-
-                            <!-- Quality Rating -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Overall Quality Rating</label>
-                                <div class="rating-stars" data-rating="0">
-                                    @for($i = 1; $i <= 5; $i++)
-                                    <svg class="rating-star" data-rating="{{ $i }}" viewBox="0 0 24 24">
-                                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                                    </svg>
-                                    @endfor
-                                </div>
-                                <input type="hidden" name="quality_rating" id="quality_rating" required>
-                                <p class="text-sm text-gray-500 mt-1">Click stars to rate (1-5 stars)</p>
-                            </div>
-
-                            <!-- Quality Issues -->
-                            <div>
-                                <div class="flex items-center mb-2">
-                                    <input type="checkbox" name="has_issues" id="has_issues" class="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded">
-                                    <label for="has_issues" class="ml-2 block text-sm font-medium text-gray-700">Report quality issues</label>
-                                </div>
-                                <textarea name="quality_issues" 
-                                          id="quality_issues" 
-                                          rows="3" 
-                                          placeholder="Describe any quality issues (optional)"
-                                          class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"
-                                          style="display: none;"></textarea>
-                            </div>
-
-                            <!-- Notes -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Additional Notes</label>
-                                <textarea name="recipient_notes" 
-                                          rows="3" 
-                                          placeholder="Any additional comments about the pickup"
-                                          class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500"></textarea>
-                            </div>
-
-                            <!-- Photo Evidence -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Photos (Optional)</label>
-                                <input type="file" 
-                                       name="photos[]" 
-                                       multiple 
-                                       accept="image/*"
-                                       class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500">
-                                <p class="text-sm text-gray-500 mt-1">Upload photos of the food received (max 5 photos, 5MB each)</p>
-                                <div id="photo-preview" class="mt-2 flex flex-wrap gap-2"></div>
-                            </div>
-
-                            <!-- Submit Button -->
-                            <div class="flex space-x-3">
-                                <button type="submit" 
-                                        class="flex-1 bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 transition-colors font-medium">
-                                    Complete Pickup
-                                </button>
-                                <button type="button" 
-                                        onclick="reportIssue()" 
-                                        class="bg-red-600 text-white py-3 px-4 rounded-md hover:bg-red-700 transition-colors font-medium">
-                                    Report Issue
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+        <!-- Food Details Card -->
+        <div class="bg-blue-50 rounded-lg p-4 mb-6">
+            <h2 class="text-lg font-semibold text-blue-800 mb-2">{{ $foodListing->food_name }}</h2>
+            <div class="text-sm text-blue-700 space-y-1">
+                <p><strong>Quantity:</strong> {{ $foodListing->quantity }} {{ $foodListing->unit }}</p>
+                <p><strong>Restaurant:</strong> {{ $donor->name }}</p>
+                <p><strong>Pickup Location:</strong> {{ $foodListing->pickup_location }}</p>
+                @if($foodListing->pickup_address)
+                    <p><strong>Address:</strong> {{ $foodListing->pickup_address }}</p>
                 @endif
-
-                <!-- Already Completed -->
-                @if($verification->pickup_completed_at)
-                <div class="bg-green-50 border border-green-200 rounded-lg p-6">
-                    <div class="flex items-center mb-4">
-                        <svg class="h-8 w-8 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        <div>
-                            <h2 class="text-xl font-semibold text-green-900">Pickup Completed!</h2>
-                            <p class="text-green-700">Completed on {{ \Carbon\Carbon::parse($verification->pickup_completed_at)->format('M d, Y \a\t H:i') }}</p>
-                        </div>
-                    </div>
-                    
-                    @if($verification->pickup_details)
-                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
-                        @if(isset($verification->pickup_details['quantity_received']))
-                        <div>
-                            <p class="text-green-600 font-medium">Quantity Received</p>
-                            <p class="text-green-900">{{ ucfirst($verification->pickup_details['quantity_received']) }}</p>
-                        </div>
-                        @endif
-                        
-                        @if(isset($verification->pickup_details['condition']))
-                        <div>
-                            <p class="text-green-600 font-medium">Food Condition</p>
-                            <p class="text-green-900">{{ ucfirst($verification->pickup_details['condition']) }}</p>
-                        </div>
-                        @endif
-                    </div>
-                    @endif
-
-                    <div class="mt-4">
-                        <a href="{{ route('recipient.matches.index') }}" 
-                           class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-                            View All Matches
-                        </a>
-                    </div>
-                </div>
+                @if($foodListing->special_instructions)
+                    <p><strong>Instructions:</strong> {{ $foodListing->special_instructions }}</p>
                 @endif
             </div>
+        </div>
 
-            <!-- Sidebar -->
-            <div class="space-y-6">
-                <!-- Location -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Pickup Location</h3>
-                    <div class="flex items-start">
-                        <svg class="h-5 w-5 text-gray-400 mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                        <div>
-                            <p class="font-medium text-gray-900">{{ $verification->foodListing->pickup_location }}</p>
-                            @if($verification->foodListing->pickup_address)
-                            <p class="text-sm text-gray-500">{{ $verification->foodListing->pickup_address }}</p>
-                            @endif
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Contact Info -->
-                <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-medium text-gray-900 mb-4">Donor Contact</h3>
-                    <div class="space-y-3">
-                        <div>
-                            <p class="font-medium text-gray-900">{{ $verification->donor->name }}</p>
-                            @if($verification->donor->restaurant_name)
-                            <p class="text-sm text-gray-500">{{ $verification->donor->restaurant_name }}</p>
-                            @endif
-                        </div>
-                        
-                        @if($verification->donor->phone)
-                        <div class="flex items-center">
-                            <svg class="h-4 w-4 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                            </svg>
-                            <p class="text-sm text-gray-700">{{ $verification->donor->phone }}</p>
-                        </div>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Help -->
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                    <h3 class="text-lg font-medium text-blue-900 mb-2">Need Help?</h3>
-                    <p class="text-sm text-blue-700 mb-3">
-                        If you encounter any issues during pickup, you can report them and our support team will help resolve the situation.
-                    </p>
-                    <button onclick="reportIssue()" 
-                            class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
-                        Report Issue
-                    </button>
+        <!-- Status Display -->
+        <div id="status-display" class="mb-6">
+            <div id="pending-status" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-500 mr-3"></div>
+                    <span class="text-yellow-800">Ready for QR code scanning</span>
                 </div>
             </div>
+
+            <div id="scanned-status" class="hidden bg-green-50 border border-green-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <svg class="w-4 h-4 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-green-800">QR Code Scanned Successfully!</span>
+                </div>
+            </div>
+
+            <div id="completed-status" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex items-center">
+                    <svg class="w-4 h-4 text-blue-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-blue-800">Pickup Completed!</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- QR Scanner Button -->
+        <div id="scanner-section" class="mb-6 space-y-3">
+            <button id="scan-qr-btn" class="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition duration-200">
+                Scan QR Code
+            </button>
+            <div class="text-center text-gray-500">or</div>
+            <button id="manual-verify-btn" class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition duration-200">
+                Verify Without Scanning
+            </button>
+        </div>
+
+        <!-- Completion Form -->
+        <div id="completion-form" class="hidden">
+            <form id="pickup-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Quality Rating</label>
+                    <div class="flex space-x-2">
+                        @for($i = 1; $i <= 5; $i++)
+                            <button type="button" class="rating-star text-2xl text-gray-300 hover:text-yellow-400" data-rating="{{ $i }}">★</button>
+                        @endfor
+                    </div>
+                    <input type="hidden" id="quality_rating" name="quality_rating" required>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <input type="checkbox" id="quality_confirmed" name="quality_confirmed" class="mr-2" required>
+                        I confirm the food quality is acceptable
+                    </label>
+                </div>
+
+                <div>
+                    <label for="recipient_notes" class="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
+                    <textarea id="recipient_notes" name="recipient_notes" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Any additional notes..."></textarea>
+                </div>
+
+                <button type="submit" class="w-full bg-green-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-green-700 transition duration-200">
+                    Complete Pickup
+                </button>
+            </form>
+        </div>
+
+        <!-- Success Message -->
+        <div id="success-message" class="hidden text-center">
+            <div class="text-green-600 text-lg font-semibold mb-2">✅ Pickup Completed Successfully!</div>
+            <p class="text-gray-600">Thank you for using MyFoodshare. The restaurant has been notified.</p>
         </div>
     </div>
 </div>
 
+<!-- QR Code Scanner Modal -->
+<div id="qr-scanner-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white rounded-lg p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold">Scan QR Code</h3>
+                <button id="close-scanner" class="text-gray-500 hover:text-gray-700">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <div id="scanner-container" class="relative">
+                <video id="qr-scanner-video" class="w-full rounded-lg"></video>
+                <div class="absolute inset-0 border-2 border-blue-500 rounded-lg pointer-events-none">
+                    <div class="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 border-blue-500"></div>
+                    <div class="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 border-blue-500"></div>
+                    <div class="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 border-blue-500"></div>
+                    <div class="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 border-blue-500"></div>
+                </div>
+            </div>
+            <p class="text-center text-sm text-gray-600 mt-2">Point your camera at the QR code</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
-// Rating stars functionality
+const verificationCode = '{{ $verification->verification_code }}';
+
+// QR Scanner functionality
+let video, canvas, context, isScanning = false;
+
 document.addEventListener('DOMContentLoaded', function() {
-    const stars = document.querySelectorAll('.rating-star');
-    const ratingInput = document.getElementById('quality_rating');
-    let currentRating = 0;
+    video = document.getElementById('qr-scanner-video');
+    canvas = document.createElement('canvas');
+    context = canvas.getContext('2d');
 
-    stars.forEach((star, index) => {
-        star.addEventListener('click', function() {
-            currentRating = index + 1;
-            ratingInput.value = currentRating;
-            updateStars();
-        });
+    // Bind events
+    document.getElementById('scan-qr-btn').addEventListener('click', startScanning);
+    document.getElementById('manual-verify-btn').addEventListener('click', manualVerify);
+    document.getElementById('close-scanner').addEventListener('click', stopScanning);
+    document.getElementById('pickup-form').addEventListener('submit', handlePickupSubmit);
 
-        star.addEventListener('mouseenter', function() {
-            highlightStars(index + 1);
-        });
+    // Rating stars
+    document.querySelectorAll('.rating-star').forEach(star => {
+        star.addEventListener('click', handleRatingClick);
     });
-
-    document.querySelector('.rating-stars').addEventListener('mouseleave', function() {
-        highlightStars(currentRating);
-    });
-
-    function updateStars() {
-        highlightStars(currentRating);
-    }
-
-    function highlightStars(rating) {
-        stars.forEach((star, index) => {
-            if (index < rating) {
-                star.classList.add('active');
-            } else {
-                star.classList.remove('active');
-            }
-        });
-    }
-
-    // Quality issues toggle
-    const hasIssuesCheckbox = document.getElementById('has_issues');
-    const qualityIssuesTextarea = document.getElementById('quality_issues');
-
-    if (hasIssuesCheckbox && qualityIssuesTextarea) {
-        hasIssuesCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                qualityIssuesTextarea.style.display = 'block';
-                qualityIssuesTextarea.required = true;
-            } else {
-                qualityIssuesTextarea.style.display = 'none';
-                qualityIssuesTextarea.required = false;
-            }
-        });
-    }
-
-    // Photo preview
-    const photoInput = document.querySelector('input[name="photos[]"]');
-    const photoPreview = document.getElementById('photo-preview');
-
-    if (photoInput && photoPreview) {
-        photoInput.addEventListener('change', function(e) {
-            photoPreview.innerHTML = '';
-            
-            Array.from(e.target.files).slice(0, 5).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.className = 'photo-preview';
-                    photoPreview.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            });
-        });
-    }
 });
 
-function reportIssue() {
-    // This would open a modal or redirect to an issue reporting form
-    const issueTypes = [
-        'Food quality not as expected',
-        'Incorrect quantity',
-        'Donor not present',
-        'Wrong pickup location',
-        'Safety concerns',
-        'Other'
-    ];
-    
-    const selectedIssue = prompt('Please select an issue type:\n' + 
-        issueTypes.map((type, index) => `${index + 1}. ${type}`).join('\n') + 
-        '\n\nEnter the number (1-' + issueTypes.length + '):');
-    
-    if (selectedIssue && selectedIssue >= 1 && selectedIssue <= issueTypes.length) {
-        const description = prompt('Please describe the issue in detail:');
-        if (description) {
-            // Submit issue report
-            reportIssueToServer(issueTypes[selectedIssue - 1], description);
+async function manualVerify() {
+    // Skip QR scanning and directly verify using the verification code from the page
+    try {
+        const location = await getCurrentLocation();
+
+        const response = await fetch(`/api/pickup/scan/${verificationCode}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                latitude: location?.latitude,
+                longitude: location?.longitude,
+                accuracy: location?.accuracy
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showScannedStatus();
+        } else {
+            alert(data.error || 'Failed to verify pickup');
         }
+    } catch (error) {
+        console.error('Verification error:', error);
+        alert('Error verifying pickup: ' + error.message);
     }
 }
 
-function reportIssueToServer(issueType, description) {
-    const formData = new FormData();
-    formData.append('issue_type', issueType);
-    formData.append('description', description);
-    formData.append('severity', 'medium');
-    formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+async function startScanning() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment' }
+        });
+        video.srcObject = stream;
+        video.play();
 
-    fetch(`/pickup/verification/{{ $verification->id }}/report-issue`, {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        alert('Issue reported successfully. Our support team will review it shortly.');
-    })
-    .catch(error => {
-        console.error('Error reporting issue:', error);
-        alert('Failed to report issue. Please try again.');
+        document.getElementById('qr-scanner-modal').classList.remove('hidden');
+        isScanning = true;
+        scanQRCode();
+    } catch (error) {
+        alert('Camera access denied or not available. Please use "Verify Without Scanning" button instead.');
+    }
+}
+
+function stopScanning() {
+    isScanning = false;
+    if (video.srcObject) {
+        video.srcObject.getTracks().forEach(track => track.stop());
+    }
+    document.getElementById('qr-scanner-modal').classList.add('hidden');
+}
+
+function scanQRCode() {
+    if (!isScanning) return;
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+        if (code) {
+            processQRCode(code.data);
+            return;
+        }
+    }
+
+    requestAnimationFrame(scanQRCode);
+}
+
+async function processQRCode(qrData) {
+    stopScanning();
+
+    // Extract verification code from URL or use directly
+    const urlMatch = qrData.match(/\/pickup\/verify\/([^\/\?]+)/);
+    const scannedCode = urlMatch ? urlMatch[1] : qrData;
+
+    if (scannedCode !== verificationCode) {
+        alert('This QR code is not valid for this pickup.');
+        return;
+    }
+
+    try {
+        // Get location if available
+        const location = await getCurrentLocation();
+
+        const response = await fetch(`/api/pickup/scan/${verificationCode}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                latitude: location?.latitude,
+                longitude: location?.longitude,
+                accuracy: location?.accuracy
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showScannedStatus();
+        } else {
+            alert(data.error || 'Failed to scan QR code');
+        }
+    } catch (error) {
+        alert('Error processing QR code: ' + error.message);
+    }
+}
+
+async function getCurrentLocation() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) {
+            resolve(null);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => resolve({
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                accuracy: position.coords.accuracy
+            }),
+            () => resolve(null),
+            { timeout: 10000, maximumAge: 300000 }
+        );
     });
+}
+
+function showScannedStatus() {
+    document.getElementById('pending-status').classList.add('hidden');
+    document.getElementById('scanned-status').classList.remove('hidden');
+    document.getElementById('scanner-section').classList.add('hidden');
+    document.getElementById('completion-form').classList.remove('hidden');
+}
+
+function handleRatingClick(e) {
+    const rating = parseInt(e.target.dataset.rating);
+    document.getElementById('quality_rating').value = rating;
+
+    document.querySelectorAll('.rating-star').forEach((star, index) => {
+        star.classList.toggle('text-yellow-400', index < rating);
+        star.classList.toggle('text-gray-300', index >= rating);
+    });
+}
+
+async function handlePickupSubmit(e) {
+    e.preventDefault();
+
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+    data.quality_confirmed = document.getElementById('quality_confirmed').checked;
+
+    try {
+        const response = await fetch(`/api/pickup/complete/${verificationCode}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showCompletedStatus();
+        } else {
+            alert(result.error || 'Failed to complete pickup');
+        }
+    } catch (error) {
+        alert('Error completing pickup: ' + error.message);
+    }
+}
+
+function showCompletedStatus() {
+    document.getElementById('scanned-status').classList.add('hidden');
+    document.getElementById('completion-form').classList.add('hidden');
+    document.getElementById('success-message').classList.remove('hidden');
 }
 </script>
 @endsection

@@ -184,6 +184,7 @@
                         @endforelse
                     </div>
                 </div>
+
             </div>
 
             <!-- Sidebar -->
@@ -246,4 +247,212 @@
         </div>
     </div>
 </div>
+
+<script src="https://js.pusher.com/7.2/pusher.min.js"></script>
+<script>
+// Initialize Pusher
+const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
+    cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
+    forceTLS: {{ env("PUSHER_SCHEME") === "https" ? "true" : "false" }}
+});
+
+// QR Code Management Functions
+async function generateQrCode(listingId) {
+    const button = document.querySelector(`[data-listing-id="${listingId}"] .generate-qr-btn`);
+    const container = document.querySelector(`[data-listing-id="${listingId}"] .qr-code-container`);
+
+    try {
+        button.disabled = true;
+        button.innerHTML = '<svg class="animate-spin h-4 w-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Generating...';
+
+        const response = await fetch(`/api/restaurant/listings/${listingId}/generate-qr`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + '{{ auth()->user()->createToken("qr-generation")->plainTextToken ?? "" }}',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+
+        const data = await response.json();
+
+        if (data.qr_code_image) {
+            // Show QR code
+            container.querySelector('.qr-code-image').src = data.qr_code_image;
+            container.classList.remove('hidden');
+            button.innerHTML = 'QR Code Generated';
+            button.classList.replace('bg-blue-600', 'bg-green-600');
+
+            // Setup real-time listening for this pickup
+            setupPickupTracking(data.verification_code, listingId);
+
+            // Show pickup updates section
+            const updatesContainer = document.querySelector(`[data-listing-id="${listingId}"] .pickup-updates`);
+            updatesContainer.classList.remove('hidden');
+        } else {
+            throw new Error(data.error || 'Failed to generate QR code');
+        }
+    } catch (error) {
+        alert('Error generating QR code: ' + error.message);
+        button.innerHTML = '<svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>Generate QR Code';
+        button.disabled = false;
+    }
+}
+
+function downloadQrCode(listingId) {
+    const img = document.querySelector(`[data-listing-id="${listingId}"] .qr-code-image`);
+    const link = document.createElement('a');
+    link.download = `food-pickup-qr-${listingId}.png`;
+    link.href = img.src;
+    link.click();
+}
+
+function setupPickupTracking(verificationCode, listingId) {
+    // Subscribe to private channel for this restaurant
+    const channel = pusher.subscribe(`private-restaurant.{{ auth()->id() }}`);
+
+    channel.bind('qr-code-scanned', function(data) {
+        if (data.food_listing && data.food_listing.id == listingId) {
+            showScanNotification(listingId, data);
+            updatePickupStatus(listingId, 'scanned');
+        }
+    });
+
+    channel.bind('pickup-completed', function(data) {
+        if (data.food_listing && data.food_listing.id == listingId) {
+            showCompletionNotification(listingId, data);
+            updatePickupStatus(listingId, 'completed');
+        }
+    });
+}
+
+function showScanNotification(listingId, data) {
+    const notification = document.querySelector(`[data-listing-id="${listingId}"] .scan-notification`);
+    const timeElement = notification.querySelector('.scan-time');
+
+    timeElement.textContent = `Scanned at ${new Date(data.scanned_at).toLocaleTimeString()}`;
+    notification.classList.remove('hidden');
+
+    // Add animation
+    notification.style.animation = 'pulse 1s ease-in-out';
+}
+
+function showCompletionNotification(listingId, data) {
+    const notification = document.querySelector(`[data-listing-id="${listingId}"] .completion-notification`);
+    const timeElement = notification.querySelector('.completion-time');
+    const starsElement = notification.querySelector('.rating-stars');
+
+    timeElement.textContent = `Completed at ${new Date(data.completed_at).toLocaleTimeString()}`;
+
+    // Show star rating
+    const stars = '★'.repeat(data.quality_rating || 5) + '☆'.repeat(5 - (data.quality_rating || 5));
+    starsElement.textContent = stars;
+
+    notification.classList.remove('hidden');
+
+    // Add animation
+    notification.style.animation = 'slideInRight 0.5s ease-out';
+}
+
+function updatePickupStatus(listingId, status) {
+    const statusElement = document.querySelector(`[data-listing-id="${listingId}"] .pickup-status`);
+
+    switch(status) {
+        case 'scanned':
+            statusElement.className = 'pickup-status inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800';
+            statusElement.textContent = 'QR Code Scanned';
+            break;
+        case 'completed':
+            statusElement.className = 'pickup-status inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
+            statusElement.textContent = 'Pickup Completed';
+            // Add checkmark
+            statusElement.innerHTML = '<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Pickup Completed';
+            break;
+    }
+}
+
+// Real-time notifications for general dashboard updates
+const restaurantChannel = pusher.subscribe(`private-restaurant.{{ auth()->id() }}`);
+
+restaurantChannel.bind('qr-code-scanned', function(data) {
+    // Show toast notification
+    showToast('QR Code Scanned', `${data.recipient.name} scanned QR code for ${data.food_listing.food_name}`, 'success');
+});
+
+restaurantChannel.bind('pickup-completed', function(data) {
+    // Show toast notification
+    showToast('Pickup Completed', `${data.recipient.name} completed pickup of ${data.food_listing.food_name}`, 'success');
+
+    // Update stats
+    updateDashboardStats();
+});
+
+function showToast(title, message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 transform transition-all duration-300 translate-x-full`;
+
+    const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+
+    toast.innerHTML = `
+        <div class="flex items-start p-4">
+            <div class="flex-shrink-0">
+                <div class="w-2 h-2 ${bgColor} rounded-full"></div>
+            </div>
+            <div class="ml-3 w-0 flex-1">
+                <p class="text-sm font-medium text-gray-900">${title}</p>
+                <p class="mt-1 text-sm text-gray-500">${message}</p>
+            </div>
+            <div class="ml-4 flex-shrink-0 flex">
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" class="inline-flex text-gray-400 hover:text-gray-500">
+                    <span class="sr-only">Close</span>
+                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Animate in
+    setTimeout(() => {
+        toast.classList.remove('translate-x-full');
+    }, 100);
+
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        toast.classList.add('translate-x-full');
+        setTimeout(() => toast.remove(), 300);
+    }, 5000);
+}
+
+async function updateDashboardStats() {
+    try {
+        const response = await fetch(`{{ route('restaurant.dashboard') }}?ajax=1`);
+        if (response.ok) {
+            // This would require updating the controller to return JSON when requested
+            // For now, we'll just refresh certain elements
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Failed to update dashboard stats:', error);
+    }
+}
+
+// Add CSS animations
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    @keyframes slideInRight {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+`;
+document.head.appendChild(style);
+</script>
 @endsection

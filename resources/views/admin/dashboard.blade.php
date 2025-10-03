@@ -101,14 +101,14 @@
                     </div>
                 </div>
 
-                <!-- Recent Activity */}
+                <!-- Recent Activity -->
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
                     <div class="space-y-4">
                         @foreach($recentActivity as $activity)
                             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                 <div class="flex items-center">
-                                    <div class="w-2 h-2 rounded-full mr-3 
+                                    <div class="w-2 h-2 rounded-full mr-3
                                         @if($activity['status'] === 'success') bg-green-500
                                         @elseif($activity['status'] === 'warning') bg-yellow-500
                                         @else bg-blue-500
@@ -256,8 +256,99 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Setup real-time updates with Pusher
+    setupRealTimeUpdates();
 });
+
+function setupRealTimeUpdates() {
+    // Initialize Pusher for real-time updates
+    const pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
+        cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
+        forceTLS: {{ env("PUSHER_SCHEME") === "https" ? "true" : "false" }}
+    });
+
+    // Subscribe to admin dashboard channel
+    const adminChannel = pusher.subscribe('private-admin.dashboard');
+
+    adminChannel.bind('qr-code-scanned', function(data) {
+        addRealtimeActivity({
+            type: 'qr_scanned',
+            message: `${data.recipient.name} scanned QR code for ${data.food_listing.food_name}`,
+            restaurant: data.restaurant.name,
+            time: new Date(data.scanned_at),
+            status: 'info'
+        });
+
+        updatePickupStats();
+    });
+
+    adminChannel.bind('pickup-completed', function(data) {
+        addRealtimeActivity({
+            type: 'pickup_completed',
+            message: `${data.recipient.name} completed pickup of ${data.food_listing.food_name}`,
+            restaurant: data.restaurant.name,
+            rating: data.quality_rating,
+            time: new Date(data.completed_at),
+            status: 'success'
+        });
+
+        updatePickupStats();
+    });
+}
+
+function addRealtimeActivity(activity) {
+    // Create activity item
+    const activityItem = document.createElement('div');
+    activityItem.className = 'flex items-start space-x-3 p-3 bg-white rounded-lg shadow-sm border animate-pulse';
+
+    const statusIcon = activity.status === 'success'
+        ? '<div class="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg></div>'
+        : '<div class="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center"><svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>';
+
+    const ratingDisplay = activity.rating ? `<div class="text-yellow-400">★${activity.rating}</div>` : '';
+
+    activityItem.innerHTML = `
+        ${statusIcon}
+        <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium text-gray-900">${activity.message}</p>
+            <p class="text-xs text-gray-500">Restaurant: ${activity.restaurant}</p>
+            <div class="flex items-center space-x-2 mt-1">
+                <p class="text-xs text-gray-400">${activity.time.toLocaleTimeString()}</p>
+                ${ratingDisplay}
+            </div>
+        </div>
+    `;
+
+    // Add to realtime activities section
+    const container = document.getElementById('realtime-activities');
+    if (container) {
+        container.insertBefore(activityItem, container.firstChild);
+
+        // Keep only last 10 items
+        while (container.children.length > 10) {
+            container.removeChild(container.lastChild);
+        }
+
+        // Remove animation class after animation completes
+        setTimeout(() => {
+            activityItem.classList.remove('animate-pulse');
+        }, 2000);
+    }
+}
+
+function updatePickupStats() {
+    // This would typically make an API call to get updated stats
+    // For demo purposes, we'll just increment some visible counters
+    const completedElement = document.getElementById('completed-pickups-stat');
+    if (completedElement) {
+        const current = parseInt(completedElement.textContent) || 0;
+        completedElement.textContent = current + 1;
+    }
+}
 </script>
+
+<script src="https://js.pusher.com/7.2/pusher.min.js"></script>
 @endpush
 
 @endsection

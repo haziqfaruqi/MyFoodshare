@@ -14,6 +14,10 @@ class RestaurantOwner
             abort(403, 'Access denied. Restaurant owners only.');
         }
 
+        if (!auth()->user()->isActive()) {
+            abort(403, 'Access denied. Your account is not active. Please contact administrator.');
+        }
+
         return $next($request);
     }
 }

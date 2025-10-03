@@ -44,8 +44,7 @@ Route::post('/food-listing/{id}/verify/{code}/complete', [QrVerificationControll
 
 // Pickup Verification Routes
 Route::get('/pickup/scanner', [App\Http\Controllers\PickupVerificationController::class, 'showScanner'])->name('pickup.scanner');
-Route::get('/pickup/verify/{code}', [App\Http\Controllers\PickupVerificationController::class, 'verify'])->name('pickup.verify');
-Route::post('/pickup/scan/{code}', [App\Http\Controllers\PickupVerificationController::class, 'scan'])->name('pickup.scan');
+Route::get('/pickup/verify/{code}', [App\Http\Controllers\QrCodeController::class, 'showVerificationPage'])->name('pickup.verify');
 Route::get('/pickup/verification/{verification}/details', [App\Http\Controllers\PickupVerificationController::class, 'getVerificationDetails'])->name('pickup.verification.details');
 
 // Debug route (remove after testing)
@@ -125,8 +124,8 @@ Route::middleware(['auth', 'restaurant_owner'])->prefix('restaurant')->name('res
     Route::put('/profile', [RestaurantProfileController::class, 'update'])->name('profile.update');
 });
 
-// Recipient Routes  
-Route::middleware(['auth'])->prefix('recipient')->name('recipient.')->group(function () {
+// Recipient Routes
+Route::middleware(['auth', 'recipient'])->prefix('recipient')->name('recipient.')->group(function () {
     Route::get('/dashboard', [RecipientDashboardController::class, 'index'])->name('dashboard');
     Route::get('/browse', [FoodBrowsingController::class, 'index'])->name('browse.index');
     Route::get('/browse/map', [FoodBrowsingController::class, 'mapView'])->name('browse.map');

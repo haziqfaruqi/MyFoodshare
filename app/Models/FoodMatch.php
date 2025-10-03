@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Notifications\PickupConfirmedNotification;
 use App\Notifications\PickupCompletedNotification;
+use App\Notifications\PickupScheduledNotification;
+use App\Events\MatchStatusUpdated;
 
 class FoodMatch extends Model
 {
@@ -75,13 +77,16 @@ class FoodMatch extends Model
 
         // Generate pickup verification record
         $verification = PickupVerification::generateForMatch($this);
-        
+
         // Update QR code to point to verification
         $this->qr_code = $verification->verification_code;
         $this->save();
 
         // Notify recipient about pickup confirmation
         $this->recipient->notify(new PickupConfirmedNotification($this));
+
+        // Broadcast real-time update
+        event(new MatchStatusUpdated($this));
 
         return $this;
     }
@@ -92,6 +97,12 @@ class FoodMatch extends Model
             'status' => 'scheduled',
             'pickup_scheduled_at' => $scheduledAt,
         ]);
+
+        // Notify recipient about the scheduled pickup
+        $this->recipient->notify(new PickupScheduledNotification($this));
+
+        // Broadcast real-time update
+        event(new MatchStatusUpdated($this));
 
         return $this;
     }

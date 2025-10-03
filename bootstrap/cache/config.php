@@ -2,9 +2,9 @@
   'app' => 
   array (
     'name' => 'MyFoodshare',
-    'env' => 'local',
-    'debug' => true,
-    'url' => 'http://192.168.0.109:8000',
+    'env' => 'production',
+    'debug' => false,
+    'url' => '192.168.0.109',
     'asset_url' => NULL,
     'timezone' => 'UTC',
     'locale' => 'en',
@@ -42,8 +42,9 @@
       21 => 'Illuminate\\View\\ViewServiceProvider',
       22 => 'App\\Providers\\AppServiceProvider',
       23 => 'App\\Providers\\AuthServiceProvider',
-      24 => 'App\\Providers\\EventServiceProvider',
-      25 => 'App\\Providers\\RouteServiceProvider',
+      24 => 'App\\Providers\\BroadcastServiceProvider',
+      25 => 'App\\Providers\\EventServiceProvider',
+      26 => 'App\\Providers\\RouteServiceProvider',
     ),
     'aliases' => 
     array (
@@ -129,6 +130,50 @@
       ),
     ),
     'password_timeout' => 10800,
+  ),
+  'broadcasting' => 
+  array (
+    'default' => 'pusher',
+    'connections' => 
+    array (
+      'pusher' => 
+      array (
+        'driver' => 'pusher',
+        'key' => 'local_app_key',
+        'secret' => 'local_app_secret',
+        'app_id' => 'local_app_id',
+        'options' => 
+        array (
+          'cluster' => 'mt1',
+          'host' => '127.0.0.1',
+          'port' => '6001',
+          'scheme' => 'http',
+          'encrypted' => true,
+          'useTLS' => false,
+        ),
+        'client_options' => 
+        array (
+        ),
+      ),
+      'ably' => 
+      array (
+        'driver' => 'ably',
+        'key' => NULL,
+      ),
+      'redis' => 
+      array (
+        'driver' => 'redis',
+        'connection' => 'default',
+      ),
+      'log' => 
+      array (
+        'driver' => 'log',
+      ),
+      'null' => 
+      array (
+        'driver' => 'null',
+      ),
+    ),
   ),
   'cache' => 
   array (
@@ -306,7 +351,7 @@
       array (
         'driver' => 'local',
         'root' => 'C:\\laragon\\www\\MyFoodshare\\storage\\app/public',
-        'url' => 'http://192.168.0.109:8000/storage',
+        'url' => '192.168.0.109/storage',
         'visibility' => 'public',
         'throw' => false,
       ),
@@ -394,7 +439,7 @@
       2 => '127.0.0.1',
       3 => '127.0.0.1:8000',
       4 => '::1',
-      5 => '192.168.0.109:8000',
+      5 => '',
     ),
     'guard' => 
     array (

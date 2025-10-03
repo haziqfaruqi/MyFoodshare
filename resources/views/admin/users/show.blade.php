@@ -112,7 +112,7 @@
                         </div>
                     </div>
                     
-                    @if($user->dietary_requirements && count($user->dietary_requirements) > 0)
+                    @if($user->dietary_requirements && is_array($user->dietary_requirements) && count($user->dietary_requirements) > 0)
                     <div class="mt-4">
                         <label class="block text-sm font-medium text-gray-700">Dietary Requirements</label>
                         <div class="mt-1 flex flex-wrap gap-2">

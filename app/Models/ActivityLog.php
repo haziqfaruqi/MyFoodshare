@@ -130,23 +130,27 @@ class ActivityLog extends Model
 
     public static function getImpactStats($userId = null, $userType = null)
     {
-        $query = static::query();
+        $baseQuery = static::query();
 
         if ($userId) {
-            $query->where('causer_id', $userId);
+            $baseQuery->where('causer_id', $userId);
         }
 
         if ($userType) {
-            $query->whereHas('causer', function($q) use ($userType) {
+            $baseQuery->whereHas('causer', function($q) use ($userType) {
                 $q->where('role', $userType);
             });
         }
 
+        // Clone query for each stat to avoid conflicts
+        $donationQuery = clone $baseQuery;
+        $pickupQuery = clone $baseQuery;
+
         return [
-            'total_donations' => $query->where('log_name', 'donation')
-                ->where('event', 'created')->count(),
-            'completed_pickups' => $query->where('log_name', 'pickup')
-                ->where('event', 'pickup_completed')->count(),
+            'total_donations' => $donationQuery->where('log_name', 'donation')
+                ->where('description', 'like', '%created a new food listing%')->count(),
+            'completed_pickups' => $pickupQuery->where('log_name', 'pickup')
+                ->where('description', 'like', '%completed pickup%')->count(),
             'meals_provided' => static::calculateMealsProvided($userId),
             'food_waste_reduced' => static::calculateFoodWasteReduced($userId),
         ];
@@ -154,9 +158,9 @@ class ActivityLog extends Model
 
     private static function calculateMealsProvided($userId = null)
     {
-        // Calculate based on completed pickups
-        $query = static::where('log_name', 'pickup')
-            ->where('event', 'pickup_completed');
+        // Calculate based on completed pickups or created donations
+        $query = static::where('log_name', 'donation')
+            ->where('description', 'like', '%created a new food listing%');
 
         if ($userId) {
             $query->where('causer_id', $userId);
@@ -164,7 +168,7 @@ class ActivityLog extends Model
 
         return $query->get()->sum(function ($log) {
             $properties = $log->properties ?? [];
-            return $properties['estimated_meals'] ?? 1; // Default 1 meal per pickup
+            return $properties['estimated_meals'] ?? 1; // Default 1 meal per donation
         });
     }
 
@@ -172,15 +176,15 @@ class ActivityLog extends Model
     {
         // Calculate based on food listings created
         $query = static::where('log_name', 'donation')
-            ->where('event', 'created');
+            ->where('description', 'like', '%created a new food listing%');
 
         if ($userId) {
             $query->where('causer_id', $userId);
         }
 
-        return $query->get()->sum(function ($log) {
+        return round($query->get()->sum(function ($log) {
             $properties = $log->properties ?? [];
             return $properties['estimated_weight_kg'] ?? 0.5; // Default 0.5kg per listing
-        });
+        }), 1);
     }
 }

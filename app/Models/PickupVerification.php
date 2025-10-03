@@ -96,6 +96,10 @@ class PickupVerification extends Model
                 'verification_status' => 'verified',
                 'location_data' => $locationData,
             ]);
+
+            // Broadcast QR code scanned event
+            broadcast(new \App\Events\QrCodeScanned($this, $this->recipient));
+
             return true;
         }
         return false;
@@ -109,6 +113,9 @@ class PickupVerification extends Model
             'photo_evidence' => $photos,
             'pickup_completed_at' => now(),
         ]);
+
+        // Broadcast pickup completed event
+        broadcast(new \App\Events\PickupCompleted($this, $this->recipient));
     }
 
     public function reportQualityIssue($rating, $issues, $notes = null)

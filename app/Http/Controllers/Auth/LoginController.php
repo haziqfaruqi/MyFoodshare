@@ -25,7 +25,13 @@ class LoginController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
-            
+
+            // Check if user account is active
+            if (!$user->isActive()) {
+                Auth::logout();
+                return back()->with('error', 'Your account is pending approval. Please contact administrator.');
+            }
+
             if ($user->isAdmin()) {
                 return redirect()->intended('/admin/dashboard');
             } elseif ($user->isDonor()) {

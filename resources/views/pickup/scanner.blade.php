@@ -194,10 +194,15 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function initializeScanner() {
-    // Check for HTTPS
-    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
-        showStatus('Camera access requires HTTPS. Please use the HTTPS ngrok URL.', 'error');
-        return;
+    // Check for HTTPS - Skip check for local network IPs
+    const isLocalNetwork = location.hostname === 'localhost' ||
+                          location.hostname.startsWith('192.168.') ||
+                          location.hostname.startsWith('10.') ||
+                          location.hostname.startsWith('172.');
+
+    if (location.protocol !== 'https:' && !isLocalNetwork) {
+        showStatus('Camera access requires HTTPS. Please use the HTTPS URL or manual code entry.', 'warning');
+        // Don't return - allow manual code entry to work
     }
 
     // Check for camera support
@@ -356,12 +361,11 @@ function processQrCode(qrData) {
 
 function createPickupVerificationFromListing(listingId, listingCode) {
     showStatus('Creating pickup verification...', 'info');
-    
+
     fetch('/api/create-pickup-verification', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({
             listing_id: listingId,
@@ -386,12 +390,11 @@ function createPickupVerificationFromListing(listingId, listingCode) {
 
 function findListingByCode(code) {
     showStatus('Looking up QR code...', 'info');
-    
+
     fetch('/api/find-listing-by-code', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
         },
         body: JSON.stringify({ code: code })
     })
@@ -412,35 +415,11 @@ function findListingByCode(code) {
 }
 
 function handlePickupVerification(verificationCode) {
-    // Get location data
-    getCurrentLocation().then(locationData => {
-        // Send scan request
-        fetch(`/pickup/scan/${verificationCode}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            },
-            body: JSON.stringify(locationData)
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showStatus('QR code verified successfully! Redirecting...', 'success');
-                setTimeout(() => {
-                    window.location.href = `/pickup/verify/${verificationCode}`;
-                }, 1500);
-            } else {
-                showStatus(data.error || 'Verification failed. Please try again.', 'error');
-                restartScanner();
-            }
-        })
-        .catch(error => {
-            console.error('Scan error:', error);
-            showStatus('Network error. Please try again.', 'error');
-            restartScanner();
-        });
-    });
+    // Redirect directly to verify page without scanning
+    showStatus('Redirecting to verification page...', 'success');
+    setTimeout(() => {
+        window.location.href = `/pickup/verify/${verificationCode}`;
+    }, 500);
 }
 
 function processManualCode() {

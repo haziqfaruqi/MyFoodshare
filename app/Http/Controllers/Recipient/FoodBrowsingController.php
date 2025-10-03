@@ -8,6 +8,7 @@ use App\Models\FoodMatch;
 use App\Notifications\NewFoodMatchNotification;
 use App\Notifications\InterestExpressedNotification;
 use App\Services\FoodMatchingService;
+use App\Events\MatchStatusUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -112,6 +113,9 @@ class FoodBrowsingController extends Controller
 
         // Notify the donor about the new interest
         $listing->user->notify(new InterestExpressedNotification($match));
+
+        // Broadcast real-time update
+        event(new MatchStatusUpdated($match));
 
         return redirect()->back()->with('success', 'Interest expressed successfully! The donor will be notified.');
     }
