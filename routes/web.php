@@ -86,12 +86,14 @@ Route::get('/debug/listings', function() {
 // Notification Routes (Authenticated Users)
 Route::middleware(['auth'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
-    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
+    // IMPORTANT: Specific routes MUST come before {id} routes
     Route::get('/notifications/unread-count', [NotificationController::class, 'getUnreadCount'])->name('notifications.unread-count');
+    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
     Route::post('/notifications/fcm-token', [NotificationController::class, 'updateFcmToken'])->name('notifications.update-fcm-token');
     Route::post('/notifications/preferences', [NotificationController::class, 'updatePreferences'])->name('notifications.update-preferences');
+    // Generic {id} routes come last
+    Route::get('/notifications/{id}', [NotificationController::class, 'show'])->name('notifications.show');
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
     
     // Pickup verification routes (authenticated)
@@ -184,3 +186,27 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/pickup-verifications/{verification}', [App\Http\Controllers\PickupVerificationController::class, 'adminReview'])->name('pickup-verifications.show');
     Route::post('/pickup-verifications/{verification}/resolve', [App\Http\Controllers\PickupVerificationController::class, 'adminResolve'])->name('pickup-verifications.resolve');
 });
+// Debug routes - remove after testing
+Route::get('/test-auth', function() {
+    return response()->json([
+        'authenticated' => auth()->check(),
+        'user_id' => auth()->id(),
+        'user_name' => auth()->user()->name ?? 'Not logged in',
+    ]);
+});
+
+Route::get('/test-notification-routes', function() {
+    return view('test-notification-route');
+})->middleware('auth');
+
+// Debug notification route - remove after testing
+Route::get('/test-notifications', function() {
+    $user = auth()->user();
+    return response()->json([
+        'authenticated' => true,
+        'user_id' => $user->id,
+        'unread_count' => $user->unreadNotifications()->count(),
+        'total_notifications' => $user->notifications()->count(),
+        'route_exists' => \Route::has('notifications.unread-count'),
+    ]);
+})->middleware('auth');

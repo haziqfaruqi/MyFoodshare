@@ -7,7 +7,9 @@
     },
     "dependencies": {
         "@tailwindcss/postcss": "^4.1.12",
+        "laravel-echo": "^2.2.4",
         "lucide-react": "^0.542.0",
+        "pusher-js": "^8.4.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
         "react-router-dom": "^6.8.0",

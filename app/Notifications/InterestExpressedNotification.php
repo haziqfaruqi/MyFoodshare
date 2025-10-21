@@ -7,10 +7,11 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 
-class InterestExpressedNotification extends Notification implements ShouldQueue
+class InterestExpressedNotification extends Notification // Removed ShouldQueue for testing
 {
-    use Queueable;
+    // use Queueable; // Commented out for sync testing
 
     protected $foodMatch;
 
@@ -21,13 +22,32 @@ class InterestExpressedNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
-        
-        if ($notifiable->push_notifications_enabled) {
-            $channels[] = 'fcm';
-        }
-        
-        return $channels;
+        // Using database and broadcast (Pusher) for real-time notifications
+        // FCM disabled until Firebase is properly configured
+        return ['database', 'broadcast'];
+    }
+
+    /**
+     * Get the broadcastable representation of the notification.
+     */
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        $data = [
+            'type' => 'interest_expressed',
+            'title' => 'Someone is Interested in Your Food Donation!',
+            'message' => "{$this->foodMatch->recipient->name} has expressed interest in your {$this->foodMatch->listing->food_name}",
+            'food_match_id' => $this->foodMatch->id,
+            'action_url' => route('restaurant.listings.show', $this->foodMatch->listing),
+        ];
+
+        \Log::info('Broadcasting notification', [
+            'notifiable_id' => $notifiable->id,
+            'notification_type' => 'interest_expressed',
+            'channel' => 'App.Models.User.' . $notifiable->id,
+            'data' => $data
+        ]);
+
+        return new BroadcastMessage($data);
     }
 
     public function toDatabase(object $notifiable): array

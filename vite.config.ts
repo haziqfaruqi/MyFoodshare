@@ -4,11 +4,11 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   server: {
-    host: '0.0.0.0',           // Allow connections from other devices
+    host: 'localhost',          // Use localhost for local development
     port: 5173,                 // Vite default port
     strictPort: true,           // Ensure it uses this exact port
     hmr: {
-      host: '192.168.0.109',    // <-- Your computer's local IP address
+      host: 'localhost',        // Use localhost for HMR
     },
   },
   plugins: [

@@ -112,7 +112,16 @@ class FoodBrowsingController extends Controller
         ]);
 
         // Notify the donor about the new interest
+        \Log::info('Sending notification to donor', [
+            'donor_id' => $listing->user->id,
+            'donor_name' => $listing->user->name,
+            'recipient_id' => $user->id,
+            'match_id' => $match->id
+        ]);
+
         $listing->user->notify(new InterestExpressedNotification($match));
+
+        \Log::info('Notification sent successfully');
 
         // Broadcast real-time update
         event(new MatchStatusUpdated($match));

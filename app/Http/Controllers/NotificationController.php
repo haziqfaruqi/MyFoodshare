@@ -7,11 +7,25 @@ use Illuminate\Support\Facades\Auth;
 
 class NotificationController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
         $notifications = Auth::user()->notifications()
             ->orderBy('created_at', 'desc')
             ->paginate(15);
+
+        // Return JSON for API requests
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return response()->json([
+                'success' => true,
+                'data' => $notifications->items(),
+                'meta' => [
+                    'total' => $notifications->total(),
+                    'current_page' => $notifications->currentPage(),
+                    'last_page' => $notifications->lastPage(),
+                    'per_page' => $notifications->perPage(),
+                ],
+            ]);
+        }
 
         return view('notifications.index', compact('notifications'));
     }

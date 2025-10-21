@@ -7,10 +7,11 @@ use App\Channels\FcmChannel;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 
-class PickupCompletedNotification extends Notification implements ShouldQueue
+class PickupCompletedNotification extends Notification // Removed ShouldQueue
 {
-    use Queueable;
+    // use Queueable; // Commented for sync notifications
 
     protected $match;
 
@@ -21,13 +22,23 @@ class PickupCompletedNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
-        
-        if ($notifiable->fcm_token && $notifiable->push_notifications_enabled) {
-            $channels[] = FcmChannel::class;
-        }
-        
-        return $channels;
+        // Using database and broadcast (Pusher) for real-time notifications
+        // FCM disabled until Firebase is properly configured
+        return ['database', 'broadcast'];
+    }
+
+    /**
+     * Get the broadcastable representation of the notification.
+     */
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'type' => 'pickup_completed',
+            'title' => 'Donation Completed!',
+            'message' => "{$this->match->recipient->name} has successfully picked up your {$this->match->foodListing->food_name}",
+            'food_listing_id' => $this->match->foodListing->id,
+            'action_url' => route('restaurant.listings.show', $this->match->foodListing),
+        ]);
     }
 
     public function toArray(object $notifiable): array

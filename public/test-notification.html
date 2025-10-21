@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Notifications</title>
+</head>
+<body>
+    <h1>Notification Test</h1>
+    <button onclick="testNotifications()">Test Fetch</button>
+    <div id="result"></div>
+    
+    <script>
+        async function testNotifications() {
+            const result = document.getElementById('result');
+            try {
+                const response = await fetch('/notifications/unread-count', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
+                });
+                
+                result.innerHTML = `Status: ${response.status}<br>`;
+                result.innerHTML += `URL: ${response.url}<br>`;
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML += `Data: ${JSON.stringify(data)}`;
+                } else {
+                    result.innerHTML += `Error: ${response.statusText}`;
+                }
+            } catch (error) {
+                result.innerHTML = `Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

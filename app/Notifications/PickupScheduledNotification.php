@@ -7,10 +7,11 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Notifications\Messages\BroadcastMessage;
 
-class PickupScheduledNotification extends Notification implements ShouldQueue
+class PickupScheduledNotification extends Notification // Removed ShouldQueue
 {
-    use Queueable;
+    // use Queueable; // Commented for sync notifications
 
     protected $foodMatch;
 
@@ -21,13 +22,24 @@ class PickupScheduledNotification extends Notification implements ShouldQueue
 
     public function via(object $notifiable): array
     {
-        $channels = ['database'];
+        // Using database and broadcast (Pusher) for real-time notifications
+        // FCM disabled until Firebase is properly configured
+        return ['database', 'broadcast'];
+    }
 
-        if ($notifiable->push_notifications_enabled) {
-            $channels[] = 'fcm';
-        }
-
-        return $channels;
+    /**
+     * Get the broadcastable representation of the notification.
+     */
+    public function toBroadcast(object $notifiable): BroadcastMessage
+    {
+        return new BroadcastMessage([
+            'type' => 'pickup_scheduled',
+            'title' => 'Pickup Scheduled!',
+            'message' => "Your pickup for {$this->foodMatch->listing->food_name} has been scheduled",
+            'food_match_id' => $this->foodMatch->id,
+            'scheduled_at' => $this->foodMatch->pickup_scheduled_at->toISOString(),
+            'action_url' => route('recipient.matches.index'),
+        ]);
     }
 
     public function toDatabase(object $notifiable): array

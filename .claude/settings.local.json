@@ -13,7 +13,8 @@
       "Bash(findstr:*)",
       "Bash(taskkill:*)",
       "Bash(dir:*)",
-      "Bash(openssl req:*)"
+      "Bash(openssl req:*)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

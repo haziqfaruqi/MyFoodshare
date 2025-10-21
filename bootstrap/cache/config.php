@@ -2,9 +2,9 @@
   'app' => 
   array (
     'name' => 'MyFoodshare',
-    'env' => 'production',
-    'debug' => false,
-    'url' => '192.168.0.109',
+    'env' => 'local',
+    'debug' => true,
+    'url' => 'http://localhost',
     'asset_url' => NULL,
     'timezone' => 'UTC',
     'locale' => 'en',
@@ -139,17 +139,17 @@
       'pusher' => 
       array (
         'driver' => 'pusher',
-        'key' => 'local_app_key',
-        'secret' => 'local_app_secret',
-        'app_id' => 'local_app_id',
+        'key' => '0dc8e1892a69376fdc45',
+        'secret' => 'e1f8b3c473e94c81fa51',
+        'app_id' => '2065697',
         'options' => 
         array (
-          'cluster' => 'mt1',
-          'host' => '127.0.0.1',
-          'port' => '6001',
-          'scheme' => 'http',
+          'cluster' => 'ap1',
+          'host' => 'api-ap1.pusherapp.com',
+          'port' => '443',
+          'scheme' => 'https',
           'encrypted' => true,
-          'useTLS' => false,
+          'useTLS' => true,
         ),
         'client_options' => 
         array (
@@ -351,7 +351,7 @@
       array (
         'driver' => 'local',
         'root' => 'C:\\laragon\\www\\MyFoodshare\\storage\\app/public',
-        'url' => '192.168.0.109/storage',
+        'url' => 'http://localhost/storage',
         'visibility' => 'public',
         'throw' => false,
       ),
@@ -439,7 +439,7 @@
       2 => '127.0.0.1',
       3 => '127.0.0.1:8000',
       4 => '::1',
-      5 => '',
+      5 => 'localhost',
     ),
     'guard' => 
     array (

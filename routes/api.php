@@ -35,3 +35,12 @@ Route::prefix('pickup')->name('api.pickup.')->group(function () {
 Route::middleware(['auth:sanctum'])->prefix('restaurant')->name('api.restaurant.')->group(function () {
     Route::post('/listings/{listing}/generate-qr', [App\Http\Controllers\QrCodeController::class, 'generateQrCode'])->name('generate-qr');
 });
+
+// Notification API Routes
+Route::middleware(['auth:sanctum'])->prefix('notifications')->name('api.notifications.')->group(function () {
+    Route::get('/', [App\Http\Controllers\NotificationController::class, 'index'])->name('index');
+    Route::get('/unread-count', [App\Http\Controllers\NotificationController::class, 'getUnreadCount'])->name('unread-count');
+    Route::post('/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('mark-read');
+    Route::post('/mark-all-read', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('mark-all-read');
+    Route::delete('/{id}', [App\Http\Controllers\NotificationController::class, 'destroy'])->name('delete');
+});

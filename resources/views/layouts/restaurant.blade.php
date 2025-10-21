@@ -60,7 +60,12 @@
             </div>
 
             <!-- User Menu -->
-            <div class="hidden lg:flex items-center">
+            <div class="hidden lg:flex items-center space-x-2">
+                <!-- Notification Bell -->
+                @auth
+                    <x-notification-bell />
+                @endauth
+
                 <div class="relative">
                     <button onclick="toggleUserMenu()" class="flex items-center space-x-2 text-gray-700 hover:text-green-600 transition-colors px-3 py-2 rounded-md">
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
