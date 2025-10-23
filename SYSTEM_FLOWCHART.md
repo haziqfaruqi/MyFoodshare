@@ -2,140 +2,169 @@
 
 ## Overview: Complete System Flow (All Users Combined)
 
-### Combined End-to-End User Journey
+### Phase 1: Registration & Authentication (All Users)
 
 ```mermaid
 flowchart TD
-    %% Registration & Login
-    START([User Visits MyFoodshare]) --> CHECK{Has Account?}
-    CHECK -->|No| REGISTER[Register]
+    START([User Visits Site]) --> CHECK{Has<br/>Account?}
+    CHECK -->|No| ROLE{Select<br/>Role}
     CHECK -->|Yes| LOGIN[Login]
 
-    REGISTER --> ROLE{Select Role}
-    ROLE -->|Restaurant| REG_REST[Register as Restaurant<br/>Business Details + GPS]
-    ROLE -->|NGO| REG_NGO[Register as Recipient<br/>Organization Details + GPS]
+    ROLE -->|Restaurant| REG_R[Register Restaurant<br/>Business Details]
+    ROLE -->|NGO| REG_N[Register NGO<br/>Organization Details]
 
-    REG_REST --> PENDING[Status: Pending]
-    REG_NGO --> PENDING
+    REG_R --> PENDING[Status: Pending]
+    REG_N --> PENDING
 
-    %% Admin Approval
-    PENDING --> ADMIN_REVIEW{Admin Reviews<br/>& Approves?}
-    ADMIN_REVIEW -->|Reject| REJECTED([Account Rejected<br/>Email Sent])
-    ADMIN_REVIEW -->|Approve| APPROVED[Status: Active<br/>Email Sent]
+    PENDING --> ADMIN{Admin<br/>Review}
+    ADMIN -->|Reject| REJECT([Rejected])
+    ADMIN -->|Approve| ACTIVE[Status: Active]
 
-    APPROVED --> LOGIN
-    LOGIN --> STATUS{Account<br/>Active?}
-    STATUS -->|No| ACCESS_DENIED([Access Denied])
-    STATUS -->|Yes| ROLE_CHECK{User Role?}
+    ACTIVE --> LOGIN
+    LOGIN --> VERIFY{Status<br/>Active?}
+    VERIFY -->|No| DENY([Access Denied])
+    VERIFY -->|Yes| DASH{Redirect by<br/>Role}
 
-    %% Restaurant Flow
-    ROLE_CHECK -->|Restaurant| REST_DASH[Restaurant Dashboard<br/>View Stats & Impact]
-    REST_DASH --> REST_ACTION{Action?}
-    REST_ACTION -->|Create Listing| CREATE_LIST[Create Food Listing<br/>Details + Photos + GPS]
-    REST_ACTION -->|View Listings| VIEW_LIST[View My Listings]
-    REST_ACTION -->|View Matches| VIEW_MATCH[View Match Requests]
+    DASH -->|Restaurant| R_DASH[Restaurant Dashboard]
+    DASH -->|Recipient| N_DASH[Recipient Dashboard]
+    DASH -->|Admin| A_DASH[Admin Dashboard]
 
-    CREATE_LIST --> LIST_SUBMIT[Submit Listing<br/>Status: pending_approval]
-    LIST_SUBMIT --> ADMIN_LIST{Admin Approves<br/>Listing?}
-    ADMIN_LIST -->|Reject| LIST_REJECT([Listing Rejected])
-    ADMIN_LIST -->|Approve| LIST_APPROVE[Listing Approved<br/>Status: approved]
+    style START fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff
+    style R_DASH fill:#FF9800,stroke:#E65100,stroke-width:2px
+    style N_DASH fill:#2196F3,stroke:#0D47A1,stroke-width:2px
+    style A_DASH fill:#9C27B0,stroke:#4A148C,stroke-width:2px
+    style REJECT fill:#F44336,stroke:#B71C1C,stroke-width:2px
+    style DENY fill:#F44336,stroke:#B71C1C,stroke-width:2px
+```
 
-    LIST_APPROVE --> AUTO_MATCH[FoodMatchingService<br/>Auto-Match Recipients<br/>within 5km Haversine]
-    AUTO_MATCH --> NOTIFY_RECIP[Notify Nearby Recipients<br/>via Pusher Real-time]
+---
 
-    VIEW_MATCH --> MATCH_REVIEW{Review<br/>Recipient<br/>Interest}
-    MATCH_REVIEW -->|Reject| MATCH_REJECT[Reject Match]
-    MATCH_REVIEW -->|Approve| MATCH_APPROVE[Approve Match]
+### Phase 2: Restaurant Creates & Admin Approves Listing
 
-    MATCH_APPROVE --> SCHEDULE[Schedule Pickup Time<br/>Create Verification]
-    SCHEDULE --> GEN_QR[Generate QR Code<br/>VRF-XXXXXXXX]
-    GEN_QR --> NOTIFY_SCHED[Notify Recipient<br/>Pickup Scheduled]
+```mermaid
+flowchart LR
+    R_DASH[Restaurant<br/>Dashboard] --> CREATE[Create Food<br/>Listing]
+    CREATE --> FILL[Fill Details<br/>Photos, GPS<br/>Expiry]
+    FILL --> SUBMIT[Submit]
+    SUBMIT --> PENDING[Status:<br/>pending_approval]
 
-    %% Recipient Flow
-    ROLE_CHECK -->|Recipient| RECIP_DASH[Recipient Dashboard<br/>View Stats & Nearby]
-    RECIP_DASH --> RECIP_ACTION{Action?}
-    RECIP_ACTION -->|Browse Food| BROWSE[Browse Listings<br/>Filter by Distance 5km]
-    RECIP_ACTION -->|Map View| MAP[View on Map<br/>GPS Markers]
-    RECIP_ACTION -->|View Matches| MY_MATCHES[My Matches]
+    PENDING --> A_REVIEW{Admin<br/>Reviews}
+    A_REVIEW -->|Reject| REJECTED([Rejected])
+    A_REVIEW -->|Approve| APPROVED[Status:<br/>approved]
 
-    NOTIFY_RECIP --> BROWSE
-    BROWSE --> SEARCH{Search<br/>Options}
-    SEARCH -->|Category| FILTER_CAT[Filter by Category]
-    SEARCH -->|Keyword| FILTER_KEY[Search Keyword]
-    SEARCH -->|Distance| FILTER_DIST[Adjust Radius]
+    APPROVED --> MATCH[Auto-Match<br/>Recipients<br/>within 5km]
+    MATCH --> NOTIFY[Notify Recipients<br/>via Pusher]
 
-    FILTER_CAT --> VIEW_DETAIL[View Listing Details<br/>Distance + Expiry]
-    FILTER_KEY --> VIEW_DETAIL
-    FILTER_DIST --> VIEW_DETAIL
-    MAP --> VIEW_DETAIL
+    style R_DASH fill:#FF9800,stroke:#E65100,stroke-width:2px
+    style A_REVIEW fill:#9C27B0,stroke:#4A148C,stroke-width:2px
+    style MATCH fill:#607D8B,stroke:#263238,stroke-width:2px
+    style NOTIFY fill:#00BCD4,stroke:#006064,stroke-width:2px
+    style REJECTED fill:#F44336,stroke:#B71C1C,stroke-width:2px
+```
 
-    VIEW_DETAIL --> INTEREST{Express<br/>Interest?}
-    INTEREST -->|Yes| EXPRESS[Express Interest<br/>Create Match]
+---
+
+### Phase 3: Recipient Browses & Expresses Interest
+
+```mermaid
+flowchart LR
+    NOTIFY[Notification<br/>Received] --> N_DASH[Recipient<br/>Dashboard]
+    N_DASH --> BROWSE[Browse<br/>Listings]
+
+    BROWSE --> FILTER{Filter<br/>Options}
+    FILTER -->|Category| F1[By Category]
+    FILTER -->|Distance| F2[By Distance]
+    FILTER -->|Map| F3[Map View]
+
+    F1 --> VIEW[View Listing<br/>Details]
+    F2 --> VIEW
+    F3 --> VIEW
+
+    VIEW --> INTEREST{Express<br/>Interest?}
+    INTEREST -->|Yes| EXPRESS[Create Match<br/>Status: pending]
     INTEREST -->|No| BROWSE
 
-    EXPRESS --> NOTIFY_REST[Notify Restaurant<br/>InterestExpressed]
-    NOTIFY_REST --> WAIT_APPROVE[Wait for Restaurant<br/>Approval]
+    EXPRESS --> NOTIFY_R[Notify Restaurant]
 
-    WAIT_APPROVE --> MATCH_STATUS{Match<br/>Status?}
-    MATCH_STATUS -->|Rejected| MATCH_REJECT
-    MATCH_STATUS -->|Approved & Scheduled| NOTIFY_SCHED
+    style NOTIFY fill:#00BCD4,stroke:#006064,stroke-width:2px
+    style N_DASH fill:#2196F3,stroke:#0D47A1,stroke-width:2px
+    style NOTIFY_R fill:#00BCD4,stroke:#006064,stroke-width:2px
+```
 
-    NOTIFY_SCHED --> MY_MATCHES
-    MY_MATCHES --> PICKUP_TIME[View Pickup Details<br/>Time + Code + Location]
-    PICKUP_TIME --> GO_PICKUP[Go to Pickup Location<br/>At Scheduled Time]
+---
 
-    GO_PICKUP --> VERIFY_METHOD{Verification<br/>Method?}
-    VERIFY_METHOD -->|Scan QR| SCAN_QR[Scan QR Code<br/>Using Camera]
-    VERIFY_METHOD -->|Manual| MANUAL_CODE[Enter Code Manually<br/>VRF-XXXXXXXX]
+### Phase 4: Restaurant Approves & Schedules Pickup
 
-    SCAN_QR --> VERIFY_SUCCESS[Verification Success<br/>Status: verified]
-    MANUAL_CODE --> VERIFY_SUCCESS
+```mermaid
+flowchart LR
+    NOTIFY_R[Restaurant<br/>Notified] --> R_MATCH[View Match<br/>Requests]
+    R_MATCH --> REVIEW{Review<br/>Match}
+    REVIEW -->|Reject| REJECT([Match<br/>Rejected])
+    REVIEW -->|Approve| APPROVE[Match<br/>Approved]
 
-    VERIFY_SUCCESS --> BROADCAST_SCAN[Real-time Broadcast<br/>QrCodeScanned Event<br/>to Restaurant]
-    BROADCAST_SCAN --> RECEIVE_FOOD[Receive Food<br/>Physical Handover]
+    APPROVE --> SCHEDULE[Schedule<br/>Pickup Time]
+    SCHEDULE --> CREATE_V[Create<br/>Verification<br/>VRF-XXXXXXXX]
+    CREATE_V --> GEN_QR[Generate<br/>QR Code]
+    GEN_QR --> NOTIFY_N[Notify<br/>Recipient]
 
-    RECEIVE_FOOD --> COMPLETE_FORM[Complete Pickup Form<br/>- Quality Rating 1-5<br/>- Photo Evidence<br/>- Notes]
-    COMPLETE_FORM --> SUBMIT_COMPLETE[Submit Completion]
+    style NOTIFY_R fill:#00BCD4,stroke:#006064,stroke-width:2px
+    style R_MATCH fill:#FF9800,stroke:#E65100,stroke-width:2px
+    style CREATE_V fill:#607D8B,stroke:#263238,stroke-width:2px
+    style GEN_QR fill:#607D8B,stroke:#263238,stroke-width:2px
+    style NOTIFY_N fill:#00BCD4,stroke:#006064,stroke-width:2px
+    style REJECT fill:#F44336,stroke:#B71C1C,stroke-width:2px
+```
 
-    SUBMIT_COMPLETE --> UPDATE_RECORDS[Update Records<br/>Match: completed<br/>Verification: completed]
-    UPDATE_RECORDS --> LOG_ACTIVITY[Activity Log Created<br/>Impact Metrics Updated]
-    LOG_ACTIVITY --> BROADCAST_COMPLETE[Real-time Broadcast<br/>PickupCompleted Event<br/>to Restaurant]
+---
 
-    %% Admin Flow
-    ROLE_CHECK -->|Admin| ADMIN_DASH[Admin Dashboard<br/>Platform Stats]
-    ADMIN_DASH --> ADMIN_ACTION{Admin Action?}
-    ADMIN_ACTION -->|Approve Users| ADMIN_REVIEW
-    ADMIN_ACTION -->|Approve Listings| ADMIN_LIST
-    ADMIN_ACTION -->|Monitor Active| MONITOR_ACTIVE[Monitor Active Listings<br/>Deactivate if Needed]
-    ADMIN_ACTION -->|View Verifications| VIEW_VERIFY[View Pickup Verifications<br/>Handle Disputes]
-    ADMIN_ACTION -->|Analytics| ANALYTICS[System Analytics<br/>Impact Metrics<br/>Geographic Distribution]
+### Phase 5: Recipient Pickup & Verification
 
-    %% Completion
-    BROADCAST_COMPLETE --> REST_NOTIFIED[Restaurant Receives<br/>Completion Notification<br/>with Rating]
-    REST_NOTIFIED --> IMPACT[Impact Stats Updated<br/>- Meals Provided<br/>- Waste Reduced]
-    IMPACT --> END_SUCCESS([Donation Cycle Complete])
+```mermaid
+flowchart TD
+    NOTIFY_N[Recipient<br/>Notified] --> VIEW_S[View Pickup<br/>Schedule]
+    VIEW_S --> GO[Go to Location<br/>at Scheduled Time]
 
-    LIST_REJECT --> REST_DASH
-    MATCH_REJECT --> RECIP_DASH
-    REJECTED --> START
-    ACCESS_DENIED --> START
+    GO --> VERIFY{Verification<br/>Method}
+    VERIFY -->|Scan QR| SCAN[Scan QR<br/>with Camera]
+    VERIFY -->|Manual| MANUAL[Enter Code<br/>Manually]
 
-    %% Styling
-    classDef startEnd fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff
-    classDef restaurant fill:#FF9800,stroke:#E65100,stroke-width:2px
-    classDef recipient fill:#2196F3,stroke:#0D47A1,stroke-width:2px
-    classDef admin fill:#9C27B0,stroke:#4A148C,stroke-width:2px
-    classDef system fill:#607D8B,stroke:#263238,stroke-width:2px
-    classDef decision fill:#FFC107,stroke:#F57F17,stroke-width:2px
-    classDef notification fill:#00BCD4,stroke:#006064,stroke-width:2px
+    SCAN --> SUCCESS[Verification<br/>Success]
+    MANUAL --> SUCCESS
 
-    class START,END_SUCCESS startEnd
-    class REST_DASH,REST_ACTION,CREATE_LIST,VIEW_LIST,VIEW_MATCH,MATCH_APPROVE,SCHEDULE,GEN_QR,REST_NOTIFIED restaurant
-    class RECIP_DASH,RECIP_ACTION,BROWSE,MAP,MY_MATCHES,EXPRESS,PICKUP_TIME,GO_PICKUP,SCAN_QR,MANUAL_CODE,RECEIVE_FOOD,COMPLETE_FORM recipient
-    class ADMIN_DASH,ADMIN_ACTION,ADMIN_REVIEW,ADMIN_LIST,MONITOR_ACTIVE,VIEW_VERIFY,ANALYTICS admin
-    class AUTO_MATCH,VERIFY_SUCCESS,UPDATE_RECORDS,LOG_ACTIVITY,IMPACT system
-    class CHECK,ROLE,STATUS,ROLE_CHECK,ADMIN_LIST,MATCH_REVIEW,MATCH_STATUS,VERIFY_METHOD,INTEREST,SEARCH decision
-    class NOTIFY_RECIP,NOTIFY_REST,NOTIFY_SCHED,BROADCAST_SCAN,BROADCAST_COMPLETE notification
+    SUCCESS --> BROADCAST1[Broadcast:<br/>QrCodeScanned<br/>to Restaurant]
+    BROADCAST1 --> RECEIVE[Receive Food<br/>Physical Handover]
+
+    style NOTIFY_N fill:#00BCD4,stroke:#006064,stroke-width:2px
+    style VIEW_S fill:#2196F3,stroke:#0D47A1,stroke-width:2px
+    style GO fill:#2196F3,stroke:#0D47A1,stroke-width:2px
+    style SUCCESS fill:#4CAF50,stroke:#2E7D32,stroke-width:2px
+    style BROADCAST1 fill:#00BCD4,stroke:#006064,stroke-width:2px
+    style RECEIVE fill:#2196F3,stroke:#0D47A1,stroke-width:2px
+```
+
+---
+
+### Phase 6: Completion & Impact Tracking
+
+```mermaid
+flowchart LR
+    RECEIVE[Food<br/>Received] --> FORM[Complete Form<br/>Rating 1-5<br/>Photos<br/>Notes]
+    FORM --> SUBMIT[Submit<br/>Completion]
+
+    SUBMIT --> UPDATE[Update Records<br/>Match: completed<br/>Verification: completed]
+    UPDATE --> LOG[Activity Log<br/>Created]
+    LOG --> IMPACT[Impact Metrics<br/>Updated<br/>Meals + Waste]
+
+    IMPACT --> BROADCAST[Broadcast:<br/>PickupCompleted<br/>to Restaurant]
+    BROADCAST --> COMPLETE([Donation Cycle<br/>Complete])
+
+    style RECEIVE fill:#2196F3,stroke:#0D47A1,stroke-width:2px
+    style FORM fill:#2196F3,stroke:#0D47A1,stroke-width:2px
+    style UPDATE fill:#607D8B,stroke:#263238,stroke-width:2px
+    style LOG fill:#607D8B,stroke:#263238,stroke-width:2px
+    style IMPACT fill:#607D8B,stroke:#263238,stroke-width:2px
+    style BROADCAST fill:#00BCD4,stroke:#006064,stroke-width:2px
+    style COMPLETE fill:#4CAF50,stroke:#2E7D32,stroke-width:3px,color:#fff
 ```
 
 ---
