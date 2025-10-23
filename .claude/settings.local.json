@@ -14,7 +14,8 @@
       "Bash(taskkill:*)",
       "Bash(dir:*)",
       "Bash(openssl req:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

@@ -9,323 +9,601 @@ flowchart TD
     B -->|Yes| D[Login]
 
     C --> E{Select Role}
-    E -->|Restaurant/Donor| F[Fill Restaurant Details<br/>- Name<br/>- Location<br/>- Contact]
-    E -->|NGO/Recipient| G[Fill Organization Details<br/>- Organization Name<br/>- Registration Number<br/>- Address]
-    E -->|Admin| H[Admin Registration<br/>Requires Super Admin]
+    E -->|Restaurant/Donor| F[Fill Restaurant Details<br/>- Restaurant Name<br/>- Business License<br/>- Cuisine Type<br/>- Phone & Address<br/>- GPS Coordinates]
+    E -->|NGO/Recipient| G[Fill Organization Details<br/>- Organization Name<br/>- NGO Registration Number<br/>- Contact Person<br/>- Recipient Capacity<br/>- GPS Coordinates]
 
     F --> I[Submit Registration]
     G --> I
-    H --> I
 
     I --> J[Status: Pending Approval]
-    J --> K[Admin Reviews Application]
+    J --> K[Admin Reviews Application<br/>via /admin/pending-approvals]
 
     K --> L{Approved?}
-    L -->|Yes| M[Account Activated<br/>Email Notification]
-    L -->|No| N[Account Rejected<br/>Email Notification]
+    L -->|Yes| M[Account Activated<br/>Status: Active<br/>approved_at & approved_by recorded<br/>Email Notification]
+    L -->|No| N[Account Rejected<br/>Status: Rejected<br/>admin_notes recorded<br/>Email Notification]
 
     M --> D
-    D --> O{User Role?}
-    O -->|Restaurant| P[Restaurant Dashboard]
-    O -->|Recipient| Q[Recipient Dashboard]
-    O -->|Admin| R[Admin Dashboard]
+    D --> O{Check Status}
+    O -->|Not Active| P[Access Denied<br/>Account Pending/Suspended/Rejected]
+    O -->|Active| Q{User Role?}
+    Q -->|Restaurant| R[Restaurant Dashboard<br/>/restaurant/dashboard]
+    Q -->|Recipient| S[Recipient Dashboard<br/>/recipient/dashboard]
+    Q -->|Admin| T[Admin Dashboard<br/>/admin/dashboard]
 ```
 
 ## 2. Restaurant/Donor Food Listing Flow
 
 ```mermaid
 flowchart TD
-    A[Restaurant Dashboard] --> B[Create Food Listing]
+    A[Restaurant Dashboard] --> B[Create Food Listing<br/>/restaurant/listings/create]
     B --> C[Fill Listing Details]
 
-    C --> D[Food Details<br/>- Food Name<br/>- Category<br/>- Quantity & Unit<br/>- Expiry Date/Time]
-    D --> E[Pickup Information<br/>- Pickup Location<br/>- Pickup Address<br/>- Special Instructions]
-    E --> F[Dietary Information<br/>- Allergens<br/>- Storage Requirements<br/>- Preparation Date]
+    C --> D[Food Details<br/>- Food Name<br/>- Description<br/>- Category<br/>- Quantity & Unit<br/>- Expiry Date/Time]
+    D --> E[Pickup Information<br/>- Pickup Location<br/>- GPS Coordinates lat/lng<br/>- Pickup Address<br/>- Special Instructions]
+    E --> F[Additional Information<br/>- Dietary Info JSON<br/>- Upload Photos max 5<br/>- Storage Requirements]
 
-    F --> G[Submit Listing]
-    G --> H[Activity Log Created<br/>- Estimated Meals<br/>- Estimated Weight]
+    F --> G[Submit Listing<br/>POST /restaurant/listings]
+    G --> H[Listing Created<br/>approval_status: pending_approval<br/>Activity Log Created]
 
-    H --> I[Listing Status: Active]
-    I --> J[Visible to Recipients]
+    H --> I[Admin Reviews Listing<br/>/admin/listing-approvals]
+    I --> J{Admin Decision}
 
-    J --> K{Match Interest?}
-    K -->|No Interest| L[Listing Expires]
-    K -->|Recipient Shows Interest| M[New Match Created<br/>Status: Pending]
+    J -->|Reject| K[Listing Rejected<br/>approval_status: rejected<br/>Donor Notified]
+    J -->|Approve| L[Listing Approved<br/>approval_status: approved<br/>approved_at & approved_by recorded]
 
-    M --> N[Restaurant Notified]
-    N --> O{Restaurant Decision}
+    L --> M[FoodMatchingService<br/>Auto-Matches Nearby Recipients]
+    M --> N[Find Recipients Within 5km<br/>Using Haversine Formula]
+    N --> O{Recipients Found?}
 
-    O -->|Approve| P[Match Status: Approved]
-    O -->|Reject| Q[Match Status: Rejected]
+    O -->|Yes| P[Create FoodMatch Records<br/>Status: pending<br/>Distance Calculated]
+    O -->|No| Q[Listing Visible<br/>No Auto-Matches Created]
 
-    P --> R[Schedule Pickup Time]
-    R --> S[Recipient Notified<br/>Pickup Scheduled]
-    S --> T[Pickup Verification Created<br/>Verification Code Generated]
+    P --> R[Send NewFoodMatchNotification<br/>to Nearby Recipients<br/>via Pusher Broadcast]
 
-    T --> U[Generate QR Code<br/>For Pickup]
-    U --> V[Wait for Pickup]
+    Q --> S[Recipients Can Browse<br/>/recipient/browse]
+    R --> S
 
-    L --> W[Activity Log: Listing Expired]
-    Q --> X[Notify Recipient<br/>Match Rejected]
+    S --> T{Recipient Action}
+    T -->|Express Interest| U[Create/Update Match<br/>Status: pending<br/>POST /recipient/browse/listing/interest]
+    T -->|No Interest| V[Match Remains Pending]
+
+    U --> W[InterestExpressedNotification<br/>Sent to Restaurant]
+    W --> X[Restaurant Reviews Match<br/>/restaurant/matches]
+
+    X --> Y{Restaurant Decision}
+    Y -->|Approve| Z[Match Status: approved<br/>PATCH /restaurant/listings/id/matches/match/approve]
+    Y -->|Reject| AA[Match Status: rejected<br/>PATCH /restaurant/listings/id/matches/match/reject<br/>Recipient Notified]
+
+    Z --> AB[Schedule Pickup<br/>PATCH /restaurant/listings/id/matches/match/schedule<br/>pickup_scheduled_at set]
+    AB --> AC[Create PickupVerification<br/>verification_code: VRF-XXXXXXXX<br/>verification_status: pending]
+
+    AC --> AD[Generate QR Code<br/>POST /api/restaurant/listings/listing/generate-qr<br/>qr_code_data JSON stored]
+    AD --> AE[PickupScheduledNotification<br/>Sent to Recipient with Details]
+    AE --> AF[Wait for Pickup]
+
+    V --> AG[Listing Expires After expiry_time]
+    AA --> S
+    K --> AH[Listing Not Visible to Recipients]
 ```
 
 ## 3. Recipient Food Discovery & Pickup Flow
 
 ```mermaid
 flowchart TD
-    A[Recipient Dashboard] --> B[Browse Food Listings]
+    A[Recipient Dashboard<br/>/recipient/dashboard] --> B[Browse Food Listings<br/>/recipient/browse]
 
     B --> C{View Options}
-    C -->|All Listings| D[View All Active Listings]
-    C -->|Search/Filter| E[Filter by<br/>- Category<br/>- Location<br/>- Dietary Info]
+    C -->|All Listings| D[FoodMatchingService<br/>getMatchesForRecipient<br/>Filter by Distance default 5km]
+    C -->|Search/Filter| E[Filter by<br/>- Category<br/>- Keyword Search<br/>- Location Radius]
+    C -->|Map View| F[View on Map<br/>/recipient/browse/map<br/>GPS-Based Locations]
 
-    D --> F[View Listing Details]
-    E --> F
+    D --> G[View Listing Details<br/>/recipient/browse/listing]
+    E --> G
+    F --> G
 
-    F --> G{Interested?}
-    G -->|No| B
-    G -->|Yes| H[Express Interest]
+    G --> H{Interested?}
+    H -->|No| B
+    H -->|Yes| I[Express Interest<br/>POST /recipient/browse/listing/interest]
 
-    H --> I[Create Food Match<br/>Status: Pending]
-    I --> J[Restaurant Notified]
-    J --> K[Wait for Restaurant Response]
+    I --> J[Create/Update Food Match<br/>Status: pending<br/>Distance Calculated]
+    J --> K[InterestExpressedNotification<br/>Sent to Restaurant via Pusher]
+    K --> L[Wait for Restaurant Response]
 
-    K --> L{Restaurant Response}
-    L -->|Rejected| M[Match Rejected<br/>Browse Other Listings]
-    L -->|Approved| N[Match Approved<br/>Pickup Scheduled Notification]
+    L --> M{Restaurant Response}
+    M -->|Rejected| N[Match Status: rejected<br/>Notification Received<br/>Browse Other Listings]
+    M -->|Approved & Scheduled| O[Match Status: scheduled<br/>PickupScheduledNotification<br/>pickup_scheduled_at set]
 
-    N --> O[View Pickup Details<br/>- Pickup Time<br/>- Location<br/>- Verification Code]
+    O --> P[View Match Details<br/>/recipient/matches]
+    P --> Q[View Pickup Information<br/>- Pickup Time<br/>- Location & Address<br/>- Verification Code<br/>- QR Code]
 
-    O --> P[Go to Pickup Location]
-    P --> Q{Verification Method}
+    Q --> R[Go to Pickup Location<br/>At Scheduled Time]
+    R --> S{Verification Method}
 
-    Q -->|Scan QR Code| R[Access /pickup/scanner<br/>or Scan via QR]
-    Q -->|Manual Code Entry| S[Access /pickup/verify/CODE]
+    S -->|Scan QR Code| T[Access QR Scanner<br/>/pickup/scanner<br/>Camera Permission Required]
+    S -->|Manual Code Entry| U[Access Verification Page<br/>/pickup/verify/CODE]
 
-    R --> T[Enter Verification Code Manually]
-    S --> T
+    T --> V[Scan QR Code with Camera<br/>Or Click 'Verify Without Scanning']
+    V --> W[API Call:<br/>POST /api/pickup/scan/CODE<br/>With Optional Location Data]
 
-    T --> U[Click 'Verify Without Scanning'<br/>Skip Camera]
-    U --> V[Pickup Verified<br/>Status: Verified]
+    U --> W
+    W --> X{Valid Code?}
 
-    V --> W[Receive Food]
-    W --> X[Complete Pickup Form<br/>- Quality Rating 1-5<br/>- Quality Confirmation<br/>- Notes Optional]
+    X -->|Invalid| Y[Error: Invalid or Expired Code<br/>Contact Restaurant]
+    X -->|Valid| Z[Verification Updated<br/>qr_code_scanned: true<br/>scanned_at: timestamp<br/>verification_status: verified]
 
-    X --> Y[Submit Completion]
-    Y --> Z[Match Status: Completed]
-    Z --> AA[Activity Log Created]
-    AA --> AB[Restaurant Notified<br/>Pickup Completed]
+    Z --> AA[Broadcast QrCodeScanned Event<br/>Restaurant Notified in Real-time]
+    AA --> AB[Show Pickup Completion Form<br/>verification/details page]
 
-    M --> B
+    AB --> AC[Receive Food<br/>Fill Completion Form:<br/>- Quantity Received<br/>- Quality Rating 1-5 stars<br/>- quality_confirmed boolean<br/>- Photo Evidence Optional<br/>- Recipient Notes]
+
+    AC --> AD[Submit Completion<br/>POST /api/pickup/complete/CODE<br/>or PATCH /recipient/matches/match/complete]
+
+    AD --> AE[Update PickupVerification<br/>pickup_completed_at: timestamp<br/>quality_rating saved<br/>pickup_details JSON<br/>photo_evidence JSON array]
+
+    AE --> AF[Update FoodMatch<br/>Status: completed<br/>completed_at: timestamp]
+
+    AF --> AG[Activity Log Created<br/>logPickupActivity<br/>Event: pickup_completed]
+
+    AG --> AH[Broadcast PickupCompleted Event<br/>PickupCompletedNotification to Restaurant]
+
+    AH --> AI[Update Impact Metrics<br/>- Meals Provided +X<br/>- Food Waste Reduced +Y kg]
+
+    AI --> AJ[Pickup Complete<br/>Visible in History<br/>/recipient/matches]
+
+    N --> B
+    Y --> AK[Retry or Contact Support]
 ```
 
 ## 4. Admin Management Flow
 
 ```mermaid
 flowchart TD
-    A[Admin Dashboard] --> B{Management Tasks}
+    A[Admin Dashboard<br/>/admin/dashboard] --> B{Management Tasks}
 
-    B -->|User Management| C[View All Users]
-    C --> D{User Status}
-    D -->|Pending| E[Review Application<br/>- Check Details<br/>- Verify Documents]
-    D -->|Active| F[View User Details]
-    D -->|Rejected| G[View Rejected Users]
+    B -->|User Management| C[View Pending Approvals<br/>/admin/pending-approvals]
+    C --> D[Review User Application]
+    D --> E{User Type}
+    E -->|Restaurant| F[Check Details:<br/>- Restaurant Name<br/>- Business License<br/>- Contact Info<br/>- GPS Coordinates]
+    E -->|Recipient| G[Check Details:<br/>- Organization Name<br/>- NGO Registration<br/>- Contact Person<br/>- Capacity]
 
-    E --> H{Approve/Reject}
-    H -->|Approve| I[Activate User Account<br/>Send Email]
-    H -->|Reject| J[Reject User<br/>Send Email]
+    F --> H{Approve/Reject}
+    G --> H
+    H -->|Approve| I[PATCH /admin/pending-approvals/user/approve<br/>Status: active<br/>approved_at: timestamp<br/>approved_by: admin_id]
+    H -->|Reject| J[PATCH /admin/pending-approvals/user/reject<br/>Status: rejected<br/>admin_notes: reason]
 
-    I --> K[User Can Login]
-    J --> L[User Cannot Access]
+    I --> K[Send Approval Email<br/>User Can Login]
+    J --> L[Send Rejection Email<br/>User Cannot Access]
 
-    B -->|Listings Management| M[View All Food Listings]
-    M --> N[Monitor Listings<br/>- Active<br/>- Expired<br/>- Completed]
+    B -->|User Management| M[View All Users<br/>/admin/users<br/>Filter by Role & Status]
+    M --> N[User Actions:<br/>- View Details & Stats<br/>- Update Status active/suspended<br/>- Delete User<br/>PATCH /admin/users/user/status]
 
-    B -->|Matches Management| O[View All Matches]
-    O --> P[Monitor Pickups<br/>- Pending<br/>- Scheduled<br/>- Completed]
+    B -->|Listing Approvals| O[View Pending Listings<br/>/admin/listing-approvals]
+    O --> P[Review Listing Details:<br/>- Food Info<br/>- Expiry Date<br/>- Photos<br/>- Restaurant Details]
+    P --> Q{Decision}
+    Q -->|Approve| R[PATCH /admin/listing-approvals/listing/approve<br/>approval_status: approved<br/>approved_at & approved_by recorded]
+    Q -->|Reject| S[PATCH /admin/listing-approvals/listing/reject<br/>approval_status: rejected]
+    Q -->|Bulk Approve| T[POST /admin/listing-approvals/bulk-approve<br/>Approve Multiple Listings]
 
-    B -->|Verification Management| Q[View Pickup Verifications]
-    Q --> R{Verification Status}
-    R -->|Pending| S[Monitor Scheduled Pickups]
-    R -->|Verified| T[QR Code Scanned]
-    R -->|Completed| U[Pickup Completed<br/>View Rating]
-    R -->|Disputed| V[Handle Quality Issues]
+    R --> U[FoodMatchingService<br/>Auto-Create Matches<br/>Notify Recipients within 5km]
 
-    B -->|Analytics| W[View System Analytics<br/>- Total Users<br/>- Total Listings<br/>- Total Matches<br/>- Success Rate]
-    W --> X[View Monthly Trends<br/>- Listings<br/>- Matches<br/>- New Users]
-    X --> Y[Geographic Distribution]
+    B -->|Active Listings| V[Monitor Active Listings<br/>/admin/active-listings]
+    V --> W[Listing Actions:<br/>- View Details<br/>- Deactivate if Needed<br/>- Mark as Expired<br/>PATCH /admin/active-listings/listing/deactivate]
+
+    B -->|Pickup Verifications| X[View All Verifications<br/>/admin/pickup-verifications]
+    X --> Y{Verification Status}
+    Y -->|Pending| Z[Monitor Scheduled Pickups<br/>Not Yet Scanned]
+    Y -->|Verified| AA[QR Code Scanned<br/>Awaiting Completion]
+    Y -->|Completed| AB[View Quality Rating<br/>View Photo Evidence<br/>Check pickup_details]
+    Y -->|Disputed| AC[Quality Issues Reported<br/>quality_confirmed: false<br/>Handle Dispute<br/>POST /admin/pickup-verifications/verification/resolve]
+
+    B -->|Analytics| AD[System Analytics<br/>/admin/analytics]
+    AD --> AE[Platform Statistics:<br/>- Total Users by Role<br/>- Total Listings<br/>- Active/Completed Matches<br/>- Success Rate]
+    AE --> AF[Monthly Trends 6-12 months:<br/>- Donations<br/>- Matches<br/>- New User Growth<br/>- Category Breakdown]
+    AF --> AG[Impact Metrics:<br/>- Meals Provided<br/>- Food Waste Reduced kg<br/>- Environmental Impact<br/>Geographic Distribution]
+
+    B -->|Reports| AH[Generate Reports<br/>Activity Logs<br/>Export Data<br/>Compliance Reports]
 ```
 
-## 5. Pickup Verification Process Flow
+## 5. Pickup Verification Process Flow (QR Code System)
 
 ```mermaid
 flowchart TD
-    A[Match Approved & Scheduled] --> B[System Creates<br/>PickupVerification Record]
-    B --> C[Generate Unique Code<br/>Format: VRF-XXXXXXXX]
+    A[Match Approved & Scheduled<br/>pickup_scheduled_at set] --> B[System Creates PickupVerification<br/>Record in pickup_verifications table]
+    B --> C[Generate Unique Code<br/>verification_code: VRF-XXXXXXXX<br/>verification_status: pending]
 
-    C --> D{Restaurant Action}
-    D -->|View Match Details| E[See Verification Code]
-    D -->|Generate QR| F[Generate QR Code<br/>Contains Verification URL]
+    C --> D[Store Match Details<br/>food_match_id<br/>food_listing_id<br/>recipient_id<br/>donor_id]
 
-    E --> G[Share Code with Recipient]
-    F --> H[Show/Print QR Code<br/>For Recipient to Scan]
+    D --> E{Restaurant Action}
+    E -->|View Match| F[See Verification Code<br/>/restaurant/matches]
+    E -->|Generate QR| G[POST /api/restaurant/listings/listing/generate-qr<br/>Create QR Code Image]
 
-    G --> I[Recipient at Pickup Location]
-    H --> I
+    G --> H[QR Code Contains URL:<br/>/pickup/verify/CODE<br/>qr_code_data stored as JSON]
+    H --> I[Display/Print QR Code<br/>For Recipient to Scan]
 
-    I --> J{Access Method}
-    J -->|From Phone| K[Access /pickup/scanner]
-    J -->|From Link/QR| L[Access /pickup/verify/CODE]
+    F --> J[Share Code with Recipient<br/>Via Notification]
+    I --> J
 
-    K --> M{Verification Method}
-    M -->|Camera Available + HTTPS| N[Scan QR Code]
-    M -->|No Camera or HTTP| O[Enter Code Manually]
+    J --> K[Recipient at Pickup Location<br/>At Scheduled Time]
+    K --> L{Access Method}
 
-    N --> P[Redirect to /pickup/verify/CODE]
-    O --> P
-    L --> P
+    L -->|Mobile Phone| M[Access QR Scanner<br/>/pickup/scanner]
+    L -->|Direct Link/QR Scan| N[Access Verification Page<br/>/pickup/verify/CODE]
+    L -->|From Notification| N
 
-    P --> Q[Verification Page Loaded<br/>Show Pickup Details]
-    Q --> R[Click 'Verify Without Scanning'<br/>or 'Scan QR Code']
+    M --> O{Camera Available?}
+    O -->|Yes HTTPS| P[Scan QR Code with Camera<br/>Uses HTML5 Camera API]
+    O -->|No or HTTP| Q[Click 'Verify Without Scanning'<br/>Manual Code Entry]
 
-    R --> S[API Call: POST /api/pickup/scan/CODE]
-    S --> T[Backend Validates Code]
+    P --> R[Extract CODE from QR<br/>Redirect to /pickup/verify/CODE]
+    Q --> R
 
-    T --> U{Valid Code?}
-    U -->|No| V[Error: Invalid Code]
-    U -->|Yes| W[Update Verification<br/>Status: Verified<br/>Scanned At: NOW]
+    N --> R
+    R --> S[Verification Page Loads<br/>Display Pickup Details:<br/>- Food Name<br/>- Restaurant<br/>- Quantity<br/>- Pickup Location]
 
-    W --> X[Broadcast Event:<br/>QrCodeScanned]
-    X --> Y[Restaurant Receives Notification]
+    S --> T[Click Verify Button<br/>or 'Scan QR Code' Button]
+    T --> U[API Call:<br/>POST /api/pickup/scan/CODE<br/>Optional: location_data JSON]
 
-    W --> Z[Show Completion Form<br/>- Quality Rating Stars<br/>- Quality Checkbox<br/>- Notes Textarea]
+    U --> V{Validate Code}
+    V -->|Invalid| W[Error Response:<br/>- Code Not Found<br/>- Already Used<br/>- Expired Match]
+    V -->|Valid| X[Update PickupVerification:<br/>qr_code_scanned: true<br/>scanned_at: timestamp<br/>verification_status: verified<br/>location_data: JSON if provided]
 
-    Z --> AA[Recipient Rates & Confirms]
-    AA --> AB[Submit: POST /api/pickup/complete/CODE]
+    X --> Y[Broadcast Event:<br/>QrCodeScanned<br/>Channel: private-restaurant-userid]
+    Y --> Z[Restaurant Dashboard<br/>Real-time Update:<br/>'Recipient has arrived']
 
-    AB --> AC[Update Verification<br/>Status: Completed<br/>Quality Rating Saved]
-    AC --> AD[Update FoodMatch<br/>Status: Completed]
+    X --> AA[Show Completion Form<br/>GET /pickup/verification/verification/details]
+    AA --> AB[Recipient Completes Form:<br/>- Quantity Received confirmation<br/>- Quality Rating Stars 1-5<br/>- quality_confirmed checkbox<br/>- Photo Evidence Upload Optional<br/>- recipient_notes textarea<br/>- quality_issues if any]
 
-    AD --> AE[Broadcast Event:<br/>PickupCompleted]
-    AE --> AF[Restaurant Receives Notification<br/>With Rating]
+    AB --> AC[Submit Completion<br/>POST /api/pickup/complete/CODE<br/>or POST /pickup/verification/verification/complete]
 
-    AD --> AG[Activity Log Created<br/>Pickup Completed Event]
-    AG --> AH[Update Impact Stats<br/>- Completed Pickups +1<br/>- Meals Provided +X]
+    AC --> AD{Validation}
+    AD -->|Missing Required Fields| AE[Error: Quality Rating Required]
+    AD -->|Complete| AF[Update PickupVerification:<br/>pickup_completed_at: timestamp<br/>quality_rating: 1-5<br/>quality_confirmed: boolean<br/>pickup_details: JSON<br/>photo_evidence: JSON array<br/>recipient_notes: text<br/>verification_status: completed]
 
-    V --> AI[User Can Retry<br/>or Contact Support]
+    AF --> AG[Update FoodMatch:<br/>status: completed<br/>completed_at: timestamp]
+
+    AG --> AH[Activity Log:<br/>logPickupActivity<br/>log_name: pickup<br/>description: pickup_completed<br/>properties: meal count, weight]
+
+    AH --> AI[Broadcast Event:<br/>PickupCompleted<br/>Channel: private-restaurant-userid]
+    AI --> AJ[PickupCompletedNotification<br/>Sent to Restaurant<br/>Includes Quality Rating]
+
+    AH --> AK[Update Impact Statistics:<br/>- Completed Pickups +1<br/>- Meals Provided +X<br/>- Food Waste Reduced +Y kg<br/>- Money Saved Estimate]
+
+    AK --> AL[Pickup Complete<br/>Visible in:<br/>- Restaurant Reports<br/>- Recipient History<br/>- Admin Analytics]
+
+    W --> AM[Display Error Message<br/>User Can Retry or Contact Support]
+    AE --> AB
 ```
 
-## 6. Real-time Notification Flow
+## 6. Real-time Notification Flow (Pusher/Laravel Echo)
 
 ```mermaid
 flowchart TD
     A[System Event Occurs] --> B{Event Type}
 
-    B -->|Recipient Shows Interest| C[InterestExpressedNotification]
-    C --> D[Notify Restaurant/Donor]
-    D --> E[Database Notification Created]
-    E --> F[Broadcast: MatchStatusUpdated Event]
+    B -->|Listing Approved by Admin| C[FoodMatchingService<br/>Auto-Creates Matches<br/>with Nearby Recipients]
+    C --> D[For Each Recipient Within 5km]
+    D --> E[NewFoodMatchNotification<br/>Database + Broadcast]
+    E --> F[Broadcast to Channel:<br/>private-user-recipientid]
+    F --> G[Laravel Echo Listener<br/>window.Echo.private user.id]
+    G --> H[Recipient Dashboard<br/>Shows New Listing Alert]
 
-    B -->|Restaurant Schedules Pickup| G[PickupScheduledNotification]
-    G --> H[Notify Recipient]
-    H --> I[Database Notification Created]
-    I --> J[Broadcast: MatchStatusUpdated Event]
+    B -->|Recipient Shows Interest| I[InterestExpressedNotification<br/>Created in notifications table]
+    I --> J[Broadcast MatchStatusUpdated Event<br/>private-restaurant-userid channel]
+    J --> K[Restaurant Dashboard<br/>Real-time Alert:<br/>'New interest in your listing']
 
-    B -->|Restaurant Approves Match| K[PickupConfirmedNotification]
-    K --> H
+    B -->|Restaurant Approves Match| L[PickupConfirmedNotification<br/>To Recipient]
+    L --> M[Database Notification Created<br/>notifiable_type: User<br/>notifiable_id: recipient_id]
+    M --> N[Broadcast to Channel:<br/>private-user-recipientid]
+    N --> O[Recipient Receives:<br/>'Your match approved<br/>Pickup scheduled']
 
-    B -->|QR Code Scanned| L[Broadcast: QrCodeScanned Event]
-    L --> M[Restaurant Channel:<br/>private-restaurant-userid]
-    M --> N[Restaurant Dashboard<br/>Shows Real-time Update]
+    B -->|Restaurant Schedules Pickup| P[PickupScheduledNotification<br/>To Recipient]
+    P --> M
 
-    B -->|Pickup Completed| O[PickupCompletedNotification]
-    O --> P[Notify Restaurant]
-    P --> Q[Broadcast: PickupCompleted Event]
-    Q --> M
+    B -->|Recipient Scans QR Code| Q[QrCodeScanned Event<br/>Broadcast in Real-time]
+    Q --> R[Channel: private-restaurant-userid]
+    R --> S[Restaurant Dashboard<br/>Shows: 'Recipient arrived<br/>QR code scanned']
 
-    F --> R[User Channels:<br/>private-user-userid]
-    J --> R
-    R --> S[User Receives Notification<br/>- In-app Alert<br/>- Optional: FCM Push]
+    B -->|Recipient Completes Pickup| T[PickupCompletedNotification<br/>To Restaurant]
+    T --> U[Database Notification<br/>Includes quality_rating]
+    U --> V[Broadcast PickupCompleted Event<br/>private-restaurant-userid]
+    V --> W[Restaurant Dashboard<br/>Shows: 'Pickup completed<br/>Rating: X stars']
+
+    B -->|Admin Approves User| X[User Approval Email<br/>Status: active<br/>approved_at set]
+    X --> Y[Send Email Notification<br/>Account activated message]
+
+    B -->|Admin Rejects User| Z[User Rejection Email<br/>Status: rejected<br/>admin_notes included]
+    Z --> AA[Send Email Notification<br/>Account rejected message]
+
+    H --> AB[User Can View in:<br/>- Notification Bell Icon<br/>- Notification History<br/>- GET /notifications]
+    K --> AB
+    O --> AB
+    W --> AB
+
+    AB --> AC{User Action}
+    AC -->|Click Notification| AD[Mark as Read<br/>POST /notifications/id/read<br/>read_at: timestamp]
+    AC -->|Mark All Read| AE[POST /notifications/mark-all-read]
+    AC -->|Delete| AF[DELETE /notifications/id]
+
+    AD --> AG[Redirect to Action:<br/>- View Listing<br/>- View Match<br/>- View Pickup Details]
 ```
 
-## 7. Activity Logging & Stats Flow
+## 7. Activity Logging & Impact Metrics Flow
 
 ```mermaid
 flowchart TD
-    A[System Action] --> B{Action Type}
+    A[System Action Occurs] --> B{Action Type}
 
-    B -->|Food Listing Created| C[ActivityLog::logFoodDonation<br/>Event: created]
-    C --> D[Store Properties:<br/>- estimated_meals<br/>- estimated_weight_kg<br/>- category, quantity, unit]
+    B -->|Food Listing Created| C[ActivityLog::logFoodDonation<br/>log_name: donation<br/>description: listing_created]
+    C --> D[Store Properties JSON:<br/>- estimated_meals calculated<br/>- estimated_weight_kg from quantity<br/>- category<br/>- expiry_date]
+    D --> E[Store Subject:<br/>subject_type: FoodListing<br/>subject_id: listing.id]
+    E --> F[Store Causer:<br/>causer_type: User<br/>causer_id: restaurant.id]
 
-    B -->|Pickup Completed| E[ActivityLog::logPickupActivity<br/>Event: pickup_completed]
-    E --> F[Store Properties:<br/>- completed_at<br/>- recipient info]
+    B -->|Listing Approved| G[ActivityLog::logAdminAction<br/>log_name: admin<br/>description: listing_approved]
+    G --> H[Store Properties:<br/>- approved_by: admin_id<br/>- approved_at: timestamp<br/>- listing_details]
+    H --> E
 
-    B -->|Admin Action| G[ActivityLog::logAdminAction<br/>Event: user_approved/rejected]
+    B -->|Match Created| I[ActivityLog::logActivity<br/>log_name: donation<br/>description: match_created]
+    I --> J[Store Properties:<br/>- recipient_id<br/>- distance_km<br/>- matched_at]
+    J --> K[Subject: FoodMatch<br/>Causer: Recipient User]
 
-    D --> H[Activity Logs Table<br/>- log_name: donation<br/>- description<br/>- subject: FoodListing<br/>- causer: User]
+    B -->|Pickup Completed| L[ActivityLog::logPickupActivity<br/>log_name: pickup<br/>description: pickup_completed]
+    L --> M[Store Properties:<br/>- completed_at<br/>- quality_rating<br/>- quantity_received<br/>- recipient_info<br/>- donor_info]
+    M --> N[Subject: FoodMatch<br/>Causer: Recipient User]
 
-    F --> I[Activity Logs Table<br/>- log_name: pickup<br/>- description<br/>- subject: FoodMatch<br/>- causer: User]
+    B -->|User Approved| O[ActivityLog::logAdminAction<br/>log_name: admin<br/>description: user_approved]
+    O --> P[Properties:<br/>- user_role<br/>- approved_by<br/>- approved_at]
+    P --> Q[Subject: User<br/>Causer: Admin]
 
-    H --> J[Calculate Impact Stats]
-    I --> J
+    F --> R[Activity Logs Table<br/>All events stored with:<br/>- batch_uuid for grouping<br/>- created_at timestamp<br/>- properties JSON<br/>- old_values JSON if update<br/>- new_values JSON if update]
+    K --> R
+    N --> R
+    Q --> R
 
-    J --> K[Dashboard Displays:<br/>- Total Donations<br/>- Completed Pickups<br/>- Meals Provided<br/>- Food Waste Reduced]
+    R --> S[Calculate Impact Statistics<br/>ActivityLog::getImpactStats]
+    S --> T[Query Activity Logs:<br/>- Where log_name = 'pickup'<br/>- Where description = 'pickup_completed'<br/>- Group by timeframe]
 
-    K --> L{User Role}
-    L -->|Restaurant| M[Restaurant Dashboard<br/>Own Stats Only]
-    L -->|Recipient| N[Recipient Dashboard<br/>Own Stats Only]
-    L -->|Admin| O[Admin Dashboard<br/>System-wide Stats]
+    T --> U[Calculate Meals Provided:<br/>SUM estimated_meals<br/>From completed pickups]
+    U --> V[Calculate Food Waste Reduced:<br/>SUM estimated_weight_kg<br/>From completed pickups]
+    V --> W[Calculate Money Saved:<br/>estimated_meals × average_meal_cost<br/>Optional calculation]
+
+    W --> X{Display Context}
+    X -->|Restaurant Dashboard| Y[Restaurant Stats:<br/>- Own donations only<br/>- Own completed pickups<br/>- Own impact metrics<br/>- Monthly trends 6 months<br/>- Recent activity timeline]
+
+    X -->|Recipient Dashboard| Z[Recipient Stats:<br/>- Total matches<br/>- Completed pickups<br/>- Meals received<br/>- Money saved estimate<br/>- Monthly pickup trends<br/>- Category preferences]
+
+    X -->|Admin Dashboard| AA[System-wide Stats:<br/>- Total donations platform<br/>- Total matches created<br/>- Total completed pickups<br/>- Total meals provided<br/>- Total waste reduced<br/>- User growth trends<br/>- Geographic distribution<br/>- Success rate %]
+
+    Y --> AB[Display Charts:<br/>- Monthly Trends Line Chart<br/>- Impact Numbers Cards<br/>- Recent Activity Feed]
+    Z --> AB
+    AA --> AB
+
+    AB --> AC[Real-time Updates<br/>When new activities logged]
 ```
 
-## 8. Data Flow Summary
+## 8. Geographic Matching Flow (Haversine Distance)
+
+```mermaid
+flowchart TD
+    A[Admin Approves Food Listing] --> B[FoodMatchingService<br/>createMatches Called]
+    B --> C[Get Listing GPS Coordinates<br/>latitude, longitude]
+
+    C --> D{Listing Has Coordinates?}
+    D -->|No| E[Fallback: Show to All Recipients<br/>No Distance Filtering]
+    D -->|Yes| F[Query Recipients<br/>Where status = active<br/>Where role = recipient]
+
+    F --> G{Recipients Have Coordinates?}
+    G -->|Filter Recipients| H[For Each Recipient:<br/>Check GPS coordinates exist]
+
+    H --> I[Calculate Distance<br/>Using Haversine Formula]
+    I --> J[Formula:<br/>a = sin²Δφ/2 + cosφ1 × cosφ2 × sin²Δλ/2<br/>c = 2 × atan2√a √1−a<br/>d = R × c<br/>R = 6371 km]
+
+    J --> K{Distance ≤ Radius?}
+    K -->|Yes Default 5km| L[Recipient Within Range<br/>Create FoodMatch Record]
+    K -->|No| M[Recipient Too Far<br/>Skip Match Creation]
+
+    L --> N[Store Match:<br/>- food_listing_id<br/>- recipient_id<br/>- status: pending<br/>- distance: calculated_km<br/>- matched_at: timestamp]
+
+    N --> O[Send NewFoodMatchNotification<br/>Database + Broadcast]
+    O --> P[Notification Data:<br/>- food_name<br/>- donor_name<br/>- distance<br/>- expiry_time<br/>- pickup_location]
+
+    M --> Q[Continue to Next Recipient]
+    Q --> H
+
+    P --> R[All Nearby Recipients Notified<br/>Via Pusher Real-time]
+
+    E --> S[Recipient Browse Page<br/>/recipient/browse<br/>Also Uses Distance Filtering]
+    S --> T[getMatchesForRecipient Called<br/>Default radius: 5km]
+    T --> U{Recipient Has GPS?}
+    U -->|Yes| V[Filter Listings by Distance<br/>Show closest first<br/>Display distance in km]
+    U -->|No| W[Show All Active Listings<br/>Fallback without distance]
+
+    V --> X[Recipient Sees:<br/>- Food Name<br/>- Distance: X.X km<br/>- Expiry Time<br/>- Restaurant Name<br/>- Category]
+
+    W --> X
+    X --> Y[Sort Results:<br/>- By Distance ascending<br/>- By Expiry Date<br/>- By Created Date]
+
+    R --> Z[Recipients Can Express Interest<br/>Even if Not Auto-Matched]
+    Z --> AA[Manual Interest Creates Match<br/>Distance Still Calculated]
+```
+
+## 9. Data Flow Summary
 
 ```mermaid
 flowchart LR
-    A[User] -->|Registers| B[Users Table]
-    B -->|Creates| C[Food Listings Table]
-    C -->|Matched With| D[Food Matches Table]
-    D -->|Verified Via| E[Pickup Verifications Table]
+    A[User Registration] -->|Creates| B[Users Table<br/>role: restaurant/recipient/admin<br/>status: pending/active/rejected<br/>GPS: latitude, longitude]
 
-    B -->|Logged In| F[Activity Logs Table]
-    C -->|Logged In| F
-    D -->|Logged In| F
-    E -->|Logged In| F
+    B -->|Approved By Admin| C[approved_at timestamp<br/>approved_by: admin_id]
 
-    F -->|Calculates| G[Impact Statistics]
+    B -->|Restaurant Creates| D[Food Listings Table<br/>approval_status: pending<br/>expiry_date, expiry_time<br/>GPS coordinates<br/>images JSON array]
 
-    E -->|Sends| H[Notifications Table]
-    D -->|Sends| H
+    D -->|Admin Approves| E[approval_status: approved<br/>approved_at, approved_by]
 
-    H -->|Broadcasts| I[Real-time Events<br/>Pusher/WebSockets]
+    E -->|FoodMatchingService| F[Food Matches Table<br/>status: pending<br/>distance calculated<br/>matched_at timestamp]
 
-    I -->|Updates| J[User Dashboards]
-    G -->|Displays On| J
+    F -->|Restaurant Approves & Schedules| G[status: scheduled<br/>pickup_scheduled_at<br/>approved_at]
+
+    G -->|System Creates| H[Pickup Verifications Table<br/>verification_code: VRF-XXX<br/>qr_code_data JSON<br/>verification_status: pending]
+
+    H -->|Recipient Scans QR| I[qr_code_scanned: true<br/>scanned_at timestamp<br/>location_data JSON<br/>verification_status: verified]
+
+    I -->|Recipient Completes| J[pickup_completed_at<br/>quality_rating: 1-5<br/>quality_confirmed: boolean<br/>photo_evidence JSON<br/>pickup_details JSON<br/>verification_status: completed]
+
+    J -->|Updates Match| K[FoodMatch status: completed<br/>completed_at timestamp]
+
+    D -->|Logs| L[Activity Logs Table<br/>log_name: donation/pickup/admin<br/>subject_type & subject_id<br/>causer_type & causer_id<br/>properties JSON<br/>batch_uuid]
+
+    F -->|Logs| L
+    K -->|Logs| L
+
+    L -->|Calculates| M[Impact Statistics<br/>- Meals Provided<br/>- Food Waste Reduced kg<br/>- Success Rate %<br/>- Monthly Trends]
+
+    F -->|Creates| N[Notifications Table<br/>type: notification class<br/>notifiable_type: User<br/>notifiable_id<br/>data JSON<br/>read_at timestamp]
+
+    G -->|Creates| N
+    J -->|Creates| N
+
+    N -->|Broadcasts Via| O[Pusher/Laravel Echo<br/>Channels:<br/>- private-user-id<br/>- private-restaurant-id<br/>- private-recipient-id]
+
+    O -->|Updates| P[User Dashboards<br/>Real-time Notifications<br/>Activity Feeds]
+
+    M -->|Displays On| P
+
+    P -->|User Actions| Q[CRUD Operations<br/>Create/Read/Update/Delete]
+    Q -->|Creates New| L
 ```
 
 ## Key System Components
 
-### Tables
-- **users**: Restaurant owners, NGO recipients, admins
-- **food_listings**: Available food donations
-- **food_matches**: Interest/matches between listings and recipients
-- **pickup_verifications**: QR code verification records
-- **activity_logs**: System activity tracking
-- **notifications**: User notifications
+### Database Tables
+- **users**: All user accounts with role-specific fields (restaurant_name, organization_name, GPS coordinates)
+- **food_listings**: Food donations with approval workflow (approval_status, approved_by, expiry tracking)
+- **food_matches**: Donor-recipient pairings with distance calculation (status, distance, scheduled times)
+- **pickup_verifications**: QR code verification system (verification_code, qr_code_data, quality ratings)
+- **activity_logs**: Comprehensive audit trail (log_name, subject polymorphic, causer polymorphic, properties JSON)
+- **notifications**: Laravel notification storage (notifiable polymorphic, read_at tracking)
+- **tracking**: Historical status changes for matches
 
-### Main Routes
-- `/restaurant/*`: Restaurant/donor dashboard and management
-- `/recipient/*`: Recipient/NGO dashboard and browsing
-- `/admin/*`: Admin management panel
-- `/pickup/scanner`: QR code scanner page
-- `/pickup/verify/{code}`: Verification and completion page
-- `/api/pickup/*`: Pickup verification APIs
+### Main Routes & Controllers
 
-### Real-time Events
-- `MatchStatusUpdated`: When match status changes
-- `QrCodeScanned`: When recipient scans QR code
-- `PickupCompleted`: When pickup is completed
+**Authentication:**
+- `GET/POST /login` → AuthController (role-based redirect)
+- `GET/POST /register/donor` → AuthController::storeDonor
+- `GET/POST /register/recipient` → AuthController::storeRecipient
 
-### Notifications
-- `InterestExpressedNotification`: To donor when recipient shows interest
-- `PickupScheduledNotification`: To recipient when pickup is scheduled
-- `PickupConfirmedNotification`: To recipient when match is approved
+**Restaurant/Donor:**
+- `/restaurant/dashboard` → RestaurantDashboardController (stats, trends, impact metrics)
+- `/restaurant/listings` → FoodListingController (CRUD operations)
+- `/restaurant/matches` → FoodListingController::manageMatches
+- `/restaurant/listings/{id}/matches/{match}/approve` → approveMatch
+- `/restaurant/listings/{id}/matches/{match}/schedule` → scheduleMatch
+- `/restaurant/reports` → reports (detailed impact metrics)
+
+**Recipient:**
+- `/recipient/dashboard` → RecipientDashboardController (stats, nearby listings)
+- `/recipient/browse` → FoodBrowsingController::index (distance-filtered)
+- `/recipient/browse/map` → FoodBrowsingController::mapView
+- `/recipient/browse/{listing}/interest` → expressInterest
+- `/recipient/matches` → myMatches
+- `/recipient/matches/{match}/complete` → completePickup
+
+**Admin:**
+- `/admin/dashboard` → AdminDashboardController (platform stats)
+- `/admin/pending-approvals` → PendingApprovalController (user approvals)
+- `/admin/listing-approvals` → ListingApprovalController (listing approvals)
+- `/admin/active-listings` → ActiveListingController (monitoring)
+- `/admin/pickup-verifications` → PickupVerificationController::adminIndex
+- `/admin/analytics` → AnalyticsController (system-wide metrics)
+
+**QR & Verification:**
+- `/pickup/scanner` → QrVerificationController::showScanner
+- `/pickup/verify/{code}` → QrVerificationController::verify
+- `POST /api/pickup/scan/{code}` → QrCodeController::scanQrCode
+- `POST /api/pickup/complete/{code}` → QrCodeController::completePickup
+- `POST /api/restaurant/listings/{listing}/generate-qr` → generateQrCode
+
+**Notifications:**
+- `GET /notifications` → NotificationController::index
+- `GET /notifications/unread-count` → getUnreadCount
+- `POST /notifications/{id}/read` → markAsRead
+- `POST /notifications/mark-all-read` → markAllAsRead
+
+### Real-time Events (Pusher Broadcasting)
+
+**Channels** (`routes/channels.php`):
+- `App.Models.User.{id}` - Private user channel
+- `restaurant.{userId}` - Donor-specific channel
+- `recipient.{userId}` - Recipient-specific channel
+- `pickup.{verificationId}` - Pickup verification channel
+- `admin.dashboard` - Admin-only dashboard channel
+
+**Broadcast Events:**
+- `MatchStatusUpdated` - Match state changes (approved, scheduled, completed)
+- `QrCodeScanned` - Real-time QR scanning notification
+- `PickupCompleted` - Final pickup completion with rating
+
+**Notification Classes:**
+- `InterestExpressedNotification` - To donor when recipient shows interest
+- `NewFoodMatchNotification` - To recipient when listing available nearby
+- `PickupConfirmedNotification` - To recipient when donor approves
+- `PickupScheduledNotification` - When pickup time set
+- `PickupCompletedNotification` - To donor with quality rating
+
+### Services & Business Logic
+
+**FoodMatchingService** (`app/Services/FoodMatchingService.php`):
+- `findNearbyRecipients($listing, $radiusKm = 5)` - Haversine distance calculation
+- `createMatches($listing, $radiusKm = 5)` - Auto-create matches on approval
+- `getMatchesForRecipient($recipient, $radiusKm = 5)` - Distance-filtered browsing
+- `calculateDistance($lat1, $lon1, $lat2, $lon2)` - Geographic distance in km
+- `autoMatchNewListing($listing)` - Wrapper for approval workflow
+
+**ActivityLog Service**:
+- `logFoodDonation()` - Track listing creation with estimated impact
+- `logPickupActivity()` - Track pickup completion with actual metrics
+- `logAdminAction()` - Track admin decisions (approvals, rejections)
+- `getImpactStats()` - Calculate system-wide or user-specific impact
+- `calculateMealsProvided()` - Aggregate meal counts from completed pickups
+- `calculateFoodWasteReduced()` - Aggregate weight saved in kg
+
+### Middleware & Authorization
+
+**Role-Based Middleware:**
+- `Admin` - Checks isAdmin() and isActive()
+- `RestaurantOwner` - Checks isRestaurantOwner() and isActive()
+- `Recipient` - Checks isRecipient() and isActive()
+
+**Status Verification:**
+- All role middleware checks `status === 'active'`
+- Blocks access for pending/suspended/rejected accounts
+
+### Technology Stack
+
+**Backend:**
+- Laravel 10.10, PHP 8.1+
+- MySQL database
+- Laravel Sanctum for API auth
+- SimpleSoftwareIO QR Code generation
+
+**Frontend:**
+- React 18.2 with TypeScript
+- React Router for navigation
+- Vite build system
+- Tailwind CSS + PostCSS
+- Recharts for data visualization
+- Lucide React for icons
+
+**Real-time:**
+- Pusher WebSocket service
+- Laravel Echo client library
+- Broadcasting configuration in config/broadcasting.php
+
+**Features:**
+- GPS-based matching with Haversine formula (default 5km radius)
+- QR code verification system with unique codes (VRF-XXXXXXXX)
+- Three-tier approval system (user approval, listing approval, pickup verification)
+- Comprehensive activity logging with polymorphic relationships
+- Real-time notifications via Pusher broadcast
+- Impact metrics tracking (meals provided, waste reduced)
+- Photo evidence support for pickups
+- Quality rating system (1-5 stars)
+- Admin oversight and dispute resolution
