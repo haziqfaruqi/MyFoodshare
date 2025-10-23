@@ -30,3 +30,5 @@ dist-ssr
 # Ignore all markdown files except README.md
 *.md
 !README.md
+!NON_FUNCTIONAL_REQUIREMENTS.md
+!FUNCTIONAL_REQUIREMENTS.md
