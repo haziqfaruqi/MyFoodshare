@@ -3,7 +3,7 @@
 ## High-Level System Overview
 
 ```mermaid
-graph TB
+graph TD
     %% Actors
     Guest((Guest))
     Restaurant((Restaurant<br/>Donor))
@@ -90,134 +90,150 @@ graph TB
 
 ---
 
-## Use Cases by Actor (Grouped View)
+## Use Cases by Actor (Vertical Layout)
 
-### 🍽️ Restaurant/Donor (6 Primary Functions)
+### 🍽️ Restaurant/Donor (13 Use Cases)
 
 ```mermaid
-graph LR
-    Restaurant((Restaurant)) --> Group1[Food Listing<br/>Management]
+graph TD
+    Restaurant((Restaurant))
+
+    Restaurant --> Group1[Food Listing<br/>Management]
     Restaurant --> Group2[Match<br/>Management]
     Restaurant --> Group3[Pickup<br/>Coordination]
     Restaurant --> Group4[Impact<br/>Tracking]
 
-    Group1 -.includes.-> UC1A[Create Listing]
-    Group1 -.includes.-> UC1B[Edit Listing]
-    Group1 -.includes.-> UC1C[Delete Listing]
-    Group1 -.includes.-> UC1D[View Listings]
+    Group1 --> UC1A[Create Listing]
+    Group1 --> UC1B[Edit Listing]
+    Group1 --> UC1C[Delete Listing]
+    Group1 --> UC1D[View Listings]
 
-    Group2 -.includes.-> UC2A[Review Matches]
-    Group2 -.includes.-> UC2B[Approve Match]
-    Group2 -.includes.-> UC2C[Reject Match]
+    Group2 --> UC2A[Review Matches]
+    Group2 --> UC2B[Approve Match]
+    Group2 --> UC2C[Reject Match]
 
-    Group3 -.includes.-> UC3A[Schedule Pickup]
-    Group3 -.includes.-> UC3B[Generate QR Code]
-    Group3 -.includes.-> UC3C[View Verifications]
+    Group3 --> UC3A[Schedule Pickup]
+    Group3 --> UC3B[Generate QR Code]
+    Group3 --> UC3C[View Verifications]
 
-    Group4 -.includes.-> UC4A[View Dashboard Stats]
-    Group4 -.includes.-> UC4B[View Reports]
-    Group4 -.includes.-> UC4C[Track Progress]
+    Group4 --> UC4A[View Dashboard Stats]
+    Group4 --> UC4B[View Reports]
+    Group4 --> UC4C[Track Progress]
 
     style Restaurant fill:#FF9800,stroke:#E65100,stroke-width:3px,color:#fff
-    style Group1,Group2,Group3,Group4 fill:#FFE0B2,stroke:#F57F17,stroke-width:2px
+    style Group1 fill:#FFE0B2,stroke:#F57F17,stroke-width:2px
+    style Group2 fill:#FFE0B2,stroke:#F57F17,stroke-width:2px
+    style Group3 fill:#FFE0B2,stroke:#F57F17,stroke-width:2px
+    style Group4 fill:#FFE0B2,stroke:#F57F17,stroke-width:2px
 ```
 
-**Total: 13 Use Cases**
-- Food Listing Management (4): Create, Edit, Delete, View
-- Match Management (3): Review, Approve, Reject
-- Pickup Coordination (3): Schedule, Generate QR, View Verifications
-- Impact Tracking (3): Dashboard, Reports, Progress
+**Breakdown:**
+- **Food Listing Management (4)**: Create, Edit, Delete, View
+- **Match Management (3)**: Review, Approve, Reject
+- **Pickup Coordination (3)**: Schedule, Generate QR, View Verifications
+- **Impact Tracking (3)**: Dashboard, Reports, Progress
 
 ---
 
-### 🎯 Recipient/NGO (5 Primary Functions)
+### 🎯 Recipient/NGO (14 Use Cases)
 
 ```mermaid
-graph LR
-    Recipient((Recipient)) --> Group1[Food<br/>Discovery]
+graph TD
+    Recipient((Recipient))
+
+    Recipient --> Group1[Food<br/>Discovery]
     Recipient --> Group2[Match<br/>Actions]
     Recipient --> Group3[Pickup<br/>Process]
     Recipient --> Group4[History &<br/>Stats]
 
-    Group1 -.includes.-> UC1A[Browse Listings]
-    Group1 -.includes.-> UC1B[Search by Keyword]
-    Group1 -.includes.-> UC1C[Filter by Category]
-    Group1 -.includes.-> UC1D[Filter by Distance]
-    Group1 -.includes.-> UC1E[View on Map]
+    Group1 --> UC1A[Browse Listings]
+    Group1 --> UC1B[Search by Keyword]
+    Group1 --> UC1C[Filter by Category]
+    Group1 --> UC1D[Filter by Distance]
+    Group1 --> UC1E[View on Map]
 
-    Group2 -.includes.-> UC2A[Express Interest]
-    Group2 -.includes.-> UC2B[View My Matches]
-    Group2 -.includes.-> UC2C[Cancel Match]
+    Group2 --> UC2A[Express Interest]
+    Group2 --> UC2B[View My Matches]
+    Group2 --> UC2C[Cancel Match]
 
-    Group3 -.includes.-> UC3A[Scan QR Code]
-    Group3 -.includes.-> UC3B[Verify Manually]
-    Group3 -.includes.-> UC3C[Complete Pickup]
-    Group3 -.includes.-> UC3D[Rate Quality]
-    Group3 -.includes.-> UC3E[Upload Photos]
+    Group3 --> UC3A[Scan QR Code]
+    Group3 --> UC3B[Verify Manually]
+    Group3 --> UC3C[Complete Pickup]
+    Group3 --> UC3D[Rate Quality]
+    Group3 --> UC3E[Upload Photos]
 
-    Group4 -.includes.-> UC4A[View History]
-    Group4 -.includes.-> UC4B[View Dashboard]
+    Group4 --> UC4A[View History]
+    Group4 --> UC4B[View Dashboard]
 
     style Recipient fill:#2196F3,stroke:#0D47A1,stroke-width:3px,color:#fff
-    style Group1,Group2,Group3,Group4 fill:#BBDEFB,stroke:#1976D2,stroke-width:2px
+    style Group1 fill:#BBDEFB,stroke:#1976D2,stroke-width:2px
+    style Group2 fill:#BBDEFB,stroke:#1976D2,stroke-width:2px
+    style Group3 fill:#BBDEFB,stroke:#1976D2,stroke-width:2px
+    style Group4 fill:#BBDEFB,stroke:#1976D2,stroke-width:2px
 ```
 
-**Total: 14 Use Cases**
-- Food Discovery (5): Browse, Search, Filter by Category/Distance, Map View
-- Match Actions (3): Express Interest, View Matches, Cancel
-- Pickup Process (5): Scan QR, Verify Manually, Complete, Rate, Upload Photos
-- History & Stats (2): View History, Dashboard
+**Breakdown:**
+- **Food Discovery (5)**: Browse, Search, Filter by Category/Distance, Map View
+- **Match Actions (3)**: Express Interest, View Matches, Cancel
+- **Pickup Process (5)**: Scan QR, Verify Manually, Complete, Rate, Upload Photos
+- **History & Stats (2)**: View History, Dashboard
 
 ---
 
-### ⚙️ Admin (5 Primary Functions)
+### ⚙️ Admin (19 Use Cases)
 
 ```mermaid
-graph LR
-    Admin((Admin)) --> Group1[User<br/>Management]
+graph TD
+    Admin((Admin))
+
+    Admin --> Group1[User<br/>Management]
     Admin --> Group2[Listing<br/>Management]
     Admin --> Group3[System<br/>Monitoring]
     Admin --> Group4[Dispute<br/>Resolution]
     Admin --> Group5[Analytics &<br/>Reporting]
 
-    Group1 -.includes.-> UC1A[View Pending Users]
-    Group1 -.includes.-> UC1B[Approve User]
-    Group1 -.includes.-> UC1C[Reject User]
-    Group1 -.includes.-> UC1D[Manage Users]
-    Group1 -.includes.-> UC1E[Update Status]
+    Group1 --> UC1A[View Pending Users]
+    Group1 --> UC1B[Approve User]
+    Group1 --> UC1C[Reject User]
+    Group1 --> UC1D[Manage Users]
+    Group1 --> UC1E[Update Status]
 
-    Group2 -.includes.-> UC2A[View Pending Listings]
-    Group2 -.includes.-> UC2B[Approve Listing]
-    Group2 -.includes.-> UC2C[Reject Listing]
-    Group2 -.includes.-> UC2D[Bulk Approve]
-    Group2 -.includes.-> UC2E[Deactivate Listing]
+    Group2 --> UC2A[View Pending Listings]
+    Group2 --> UC2B[Approve Listing]
+    Group2 --> UC2C[Reject Listing]
+    Group2 --> UC2D[Bulk Approve]
+    Group2 --> UC2E[Deactivate Listing]
 
-    Group3 -.includes.-> UC3A[Monitor Active Listings]
-    Group3 -.includes.-> UC3B[View All Matches]
-    Group3 -.includes.-> UC3C[View Verifications]
+    Group3 --> UC3A[Monitor Active Listings]
+    Group3 --> UC3B[View All Matches]
+    Group3 --> UC3C[View Verifications]
 
-    Group4 -.includes.-> UC4A[Handle Disputes]
-    Group4 -.includes.-> UC4B[Resolve Quality Issues]
+    Group4 --> UC4A[Handle Disputes]
+    Group4 --> UC4B[Resolve Quality Issues]
 
-    Group5 -.includes.-> UC5A[System Analytics]
-    Group5 -.includes.-> UC5B[Monthly Trends]
-    Group5 -.includes.-> UC5C[Geographic Distribution]
-    Group5 -.includes.-> UC5D[Generate Reports]
+    Group5 --> UC5A[System Analytics]
+    Group5 --> UC5B[Monthly Trends]
+    Group5 --> UC5C[Geographic Distribution]
+    Group5 --> UC5D[Generate Reports]
 
     style Admin fill:#9C27B0,stroke:#4A148C,stroke-width:3px,color:#fff
-    style Group1,Group2,Group3,Group4,Group5 fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px
+    style Group1 fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px
+    style Group2 fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px
+    style Group3 fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px
+    style Group4 fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px
+    style Group5 fill:#E1BEE7,stroke:#7B1FA2,stroke-width:2px
 ```
 
-**Total: 19 Use Cases**
-- User Management (5): View Pending, Approve, Reject, Manage, Update Status
-- Listing Management (5): View Pending, Approve, Reject, Bulk Approve, Deactivate
-- System Monitoring (3): Monitor Listings, View Matches, View Verifications
-- Dispute Resolution (2): Handle Disputes, Resolve Quality Issues
-- Analytics & Reporting (4): System Analytics, Trends, Geographic Data, Reports
+**Breakdown:**
+- **User Management (5)**: View Pending, Approve, Reject, Manage, Update Status
+- **Listing Management (5)**: View Pending, Approve, Reject, Bulk Approve, Deactivate
+- **System Monitoring (3)**: Monitor Listings, View Matches, View Verifications
+- **Dispute Resolution (2)**: Handle Disputes, Resolve Quality Issues
+- **Analytics & Reporting (4)**: System Analytics, Trends, Geographic Data, Reports
 
 ---
 
-## Core User Journeys (Swim Lane Diagram)
+## Core User Journey (Sequence Diagram)
 
 ```mermaid
 sequenceDiagram
@@ -258,7 +274,7 @@ sequenceDiagram
 
 **Total: 52 Use Cases** (reduced from 66)
 
-### Grouped into:
+### Grouped Functions
 - **4 Core Functions per Restaurant** (Listing, Match, Pickup, Impact)
 - **4 Core Functions per Recipient** (Discovery, Match, Pickup, History)
 - **5 Core Functions per Admin** (Users, Listings, Monitoring, Disputes, Analytics)
@@ -278,27 +294,7 @@ sequenceDiagram
 
 ---
 
-## Key Relationships
-
-### Include Relationships
-- **Manage Food Listings** includes Create, Edit, Delete, View
-- **Pickup Process** includes Scan QR, Complete, Rate Quality, Upload Photos
-- **Admin Approve Listing** triggers System Auto-Match
-
-### Extend Relationships
-- **Browse Listings** extends to Search, Filter by Category, Filter by Distance, Map View
-- **Manage Matches** extends to Approve or Reject
-
-### Trigger Relationships
-- **Admin Approve Listing** → triggers System Auto-Match
-- **Express Interest** → triggers Restaurant Notification
-- **Approve Match** → triggers Recipient Notification
-- **Scan QR Code** → triggers Real-time Broadcast to Restaurant
-- **Complete Pickup** → triggers Real-time Broadcast + Activity Logging
-
----
-
-## Business Rules Summary
+## Business Rules
 
 1. **User Approval**: All users require admin approval before access
 2. **Listing Approval**: All listings require admin approval before visibility
@@ -326,7 +322,7 @@ sequenceDiagram
 This simplified diagram consolidates 66 detailed use cases into:
 - **13 high-level functional groups**
 - **4 core functions per actor**
-- **Clear visual hierarchy**
-- **Easy-to-understand swim lanes**
+- **Clear vertical hierarchy**
+- **Easy-to-understand sequence flows**
 
 For detailed use case specifications, see [USE_CASE_DIAGRAM.md](USE_CASE_DIAGRAM.md) (comprehensive version with all 66 use cases documented).
