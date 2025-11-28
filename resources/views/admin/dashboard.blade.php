@@ -104,22 +104,24 @@
                 <!-- Recent Activity -->
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
-                    <div class="space-y-4">
+                    <div class="space-y-3 max-h-80 overflow-y-auto pr-2">
                         @foreach($recentActivity as $activity)
-                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                <div class="flex items-center">
-                                    <div class="w-2 h-2 rounded-full mr-3
+                            <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div class="flex items-center min-w-0 flex-1">
+                                    <div class="w-2 h-2 rounded-full mr-3 flex-shrink-0
                                         @if($activity['status'] === 'success') bg-green-500
                                         @elseif($activity['status'] === 'warning') bg-yellow-500
                                         @else bg-blue-500
                                         @endif">
                                     </div>
-                                    <div>
-                                        <p class="font-medium text-gray-900">{{ $activity['user'] }}</p>
-                                        <p class="text-sm text-gray-600">{{ $activity['action'] }}</p>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="font-medium text-gray-900 truncate">{{ $activity['user'] }}</p>
+                                        <p class="text-sm text-gray-600 truncate">{{ $activity['action'] }}</p>
                                     </div>
                                 </div>
-                                <div class="text-sm text-gray-500">{{ $activity['time'] }}</div>
+                                <div class="text-sm text-gray-500 flex-shrink-0 ml-3">
+                                    {{ $activity['time'] }}
+                                </div>
                             </div>
                         @endforeach
                     </div>
@@ -174,7 +176,7 @@
 
             <!-- Sidebar -->
             <div class="space-y-6">
-                <!-- Quick Actions -->}
+                <!-- Quick Actions -->
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
                     <div class="space-y-3">

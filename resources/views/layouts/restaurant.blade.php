@@ -6,7 +6,7 @@
         <div class="flex justify-between h-16">
             <div class="flex items-center">
                 <a href="{{ route('restaurant.dashboard') }}" class="flex items-center space-x-2">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-10 w-auto object-contain">
+                    <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-16 w-auto object-contain">
                     <div>
                         <div class="text-xs text-green-600 font-medium">Restaurant Portal</div>
                     </div>

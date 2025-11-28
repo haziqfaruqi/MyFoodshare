@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\FoodListing;
 use App\Models\FoodMatch;
 use App\Models\Recipient;
+use App\Models\PickupVerification;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -27,11 +28,8 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $recentActivity = [
-            ['user' => 'Golden Spoon', 'action' => 'Listed 30 sandwiches', 'time' => '5 min ago', 'status' => 'success'],
-            ['user' => 'Pizza Corner', 'action' => 'Pickup completed', 'time' => '15 min ago', 'status' => 'success'],
-            ['user' => 'Hope Foundation', 'action' => 'New registration pending', 'time' => '1 hour ago', 'status' => 'warning'],
-        ];
+        // Get recent activity from actual database records
+        $recentActivity = $this->getRecentActivity();
 
         // Real monthly trends for the last 6 months
         $monthlyData = $this->getMonthlyTrends();
@@ -62,5 +60,86 @@ class DashboardController extends Controller
         }
         
         return $trends;
+    }
+
+    private function getRecentActivity()
+    {
+        $activity = [];
+
+        // Get recent food listings
+        $recentListings = FoodListing::with('user')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        foreach ($recentListings as $listing) {
+            $activity[] = [
+                'user' => $listing->user->name,
+                'action' => "Listed {$listing->food_name}",
+                'time' => $listing->created_at->diffForHumans(),
+                'timestamp' => $listing->created_at->timestamp,
+                'status' => 'success'
+            ];
+        }
+
+        // Get recent matches
+        $recentMatches = FoodMatch::with(['foodListing.user', 'recipient'])
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        foreach ($recentMatches as $match) {
+            $activity[] = [
+                'user' => $match->foodListing->user->name,
+                'action' => "Match with {$match->recipient->organization_name}",
+                'time' => $match->created_at->diffForHumans(),
+                'timestamp' => $match->created_at->timestamp,
+                'status' => 'info'
+            ];
+        }
+
+        // Get recent pickup verifications
+        $recentPickups = PickupVerification::with(['donor', 'recipient'])
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        foreach ($recentPickups as $pickup) {
+            $activity[] = [
+                'user' => $pickup->recipient->name,
+                'action' => "Completed pickup verification from {$pickup->donor->name}",
+                'time' => $pickup->created_at->diffForHumans(),
+                'timestamp' => $pickup->created_at->timestamp,
+                'status' => 'success'
+            ];
+        }
+
+        // Get recent user registrations
+        $recentUsers = User::where('status', 'pending')
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
+
+        foreach ($recentUsers as $user) {
+            $activity[] = [
+                'user' => $user->name,
+                'action' => "New registration pending",
+                'time' => $user->created_at->diffForHumans(),
+                'timestamp' => $user->created_at->timestamp,
+                'status' => 'warning'
+            ];
+        }
+
+        // Sort all activities by actual timestamp (newest first)
+        usort($activity, function($a, $b) {
+            return $b['timestamp'] - $a['timestamp'];
+        });
+
+        // Remove timestamp from final array (used only for sorting)
+        foreach ($activity as &$item) {
+            unset($item['timestamp']);
+        }
+
+        return $activity;
     }
 }

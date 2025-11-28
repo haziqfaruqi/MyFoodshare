@@ -51,6 +51,11 @@ class FoodMatch extends Model
         return $this->belongsTo(User::class, 'recipient_id');
     }
 
+    public function restaurant()
+    {
+        return $this->belongsTo(User::class, 'restaurant_id');
+    }
+
     public function tracking()
     {
         return $this->hasMany(Tracking::class);

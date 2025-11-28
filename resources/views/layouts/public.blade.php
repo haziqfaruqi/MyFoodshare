@@ -6,7 +6,7 @@
         <div class="flex justify-between h-16">
             <div class="flex items-center">
                 <a href="{{ route('home') }}" class="flex items-center">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-10 w-auto object-contain">
+                    <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-16 w-auto object-contain">
                 </a>
             </div>
 

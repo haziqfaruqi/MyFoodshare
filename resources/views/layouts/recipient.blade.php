@@ -6,7 +6,7 @@
         <div class="flex justify-between h-16">
             <div class="flex items-center">
                 <a href="{{ route('recipient.browse.index') }}" class="flex items-center space-x-2">
-                    <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-10 w-auto object-contain">
+                    <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-16 w-auto object-contain">
                     <div>
                         <div class="text-xs text-green-600 font-medium flex items-center">
                             <svg class="h-3 w-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">

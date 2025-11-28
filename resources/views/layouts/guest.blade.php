@@ -18,7 +18,7 @@
                 <!-- Logo -->
                 <div class="flex-shrink-0">
                     <a href="{{ route('home') }}" class="flex items-center">
-                        <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-10 w-auto object-contain">
+                        <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-16 w-auto object-contain">
                     </a>
                 </div>
 
@@ -54,7 +54,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <div class="col-span-2">
                     <div class="flex items-center mb-4">
-                        <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-10 w-auto object-contain">
+                        <img src="{{ asset('images/logo.jpg') }}" alt="MyFoodshare" class="h-16 w-auto object-contain">
                     </div>
                     <p class="text-gray-300 mb-4">
                         Connecting food donors with recipients to reduce waste and feed communities across Malaysia.
