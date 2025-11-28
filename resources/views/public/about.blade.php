@@ -59,11 +59,7 @@
                     </div>
                 </div>
                 <div class="relative">
-                    <div class="w-full h-64 bg-gray-200 rounded-lg flex items-center justify-center">
-                        <svg class="h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                    </div>
+                    <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Food sharing mission" class="w-full h-64 object-cover rounded-lg">
                     <div class="absolute -bottom-6 -left-6 bg-green-600 text-white p-6 rounded-lg shadow-lg">
                         <div class="text-2xl font-bold">15,000+</div>
                         <div class="text-green-100">Meals Redistributed</div>
@@ -73,7 +69,7 @@
         </div>
     </section>
 
-    <!-- Call to Action -->}
+    <!-- Call to Action -->
     <section class="py-20 bg-white">
         <div class="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
             <h2 class="text-3xl font-bold text-gray-900 mb-6">Join Our Mission</h2>
