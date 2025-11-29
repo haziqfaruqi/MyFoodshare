@@ -21,10 +21,14 @@ class DashboardController extends Controller
             'total_listings' => $user->foodListings()->count(),
             'active_listings' => $user->foodListings()->where('status', 'active')->count(),
             'total_matches' => FoodMatch::whereHas('foodListing', function($query) use ($user) {
-                $query->where('user_id', $user->id);
+                $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
+                    $profileQuery->where('user_id', $user->id);
+                });
             })->count(),
             'completed_donations' => FoodMatch::whereHas('foodListing', function($query) use ($user) {
-                $query->where('user_id', $user->id);
+                $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
+                    $profileQuery->where('user_id', $user->id);
+                });
             })->where('status', 'completed')->count(),
         ];
 
@@ -62,7 +66,9 @@ class DashboardController extends Controller
             ->get();
 
         $pendingMatches = FoodMatch::whereHas('foodListing', function($query) use ($user) {
-            $query->where('user_id', $user->id);
+            $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
+                $profileQuery->where('user_id', $user->id);
+            });
         })->where('status', 'pending')->with(['recipient', 'foodListing'])->get();
 
         // Category breakdown
@@ -112,10 +118,14 @@ class DashboardController extends Controller
             'total_listings' => $user->foodListings()->count(),
             'active_listings' => $user->foodListings()->where('status', 'active')->count(),
             'completed_donations' => FoodMatch::whereHas('foodListing', function($query) use ($user) {
-                $query->where('user_id', $user->id);
+                $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
+                    $profileQuery->where('user_id', $user->id);
+                });
             })->where('status', 'completed')->count(),
             'total_matches' => FoodMatch::whereHas('foodListing', function($query) use ($user) {
-                $query->where('user_id', $user->id);
+                $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
+                    $profileQuery->where('user_id', $user->id);
+                });
             })->count(),
         ];
 

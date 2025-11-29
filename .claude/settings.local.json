@@ -15,7 +15,9 @@
       "Bash(dir:*)",
       "Bash(openssl req:*)",
       "Bash(npm install:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(del:*)",
+      "Bash(kill:*)"
     ],
     "deny": [],
     "ask": []

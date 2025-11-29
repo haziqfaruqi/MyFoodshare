@@ -64,14 +64,26 @@ class User extends Authenticatable
         ];
     }
 
-    public function foodListings()
+    public function restaurantProfile()
     {
-        return $this->hasMany(FoodListing::class);
+        return $this->hasOne(RestaurantProfile::class);
     }
 
-    public function matches()
+    public function recipient()
     {
-        return $this->hasMany(FoodMatch::class, 'recipient_id');
+        return $this->hasOne(Recipient::class);
+    }
+
+    public function createdFoodListings()
+    {
+        return $this->hasMany(FoodListing::class, 'created_by');
+    }
+
+    public function foodListings()
+    {
+        return FoodListing::whereHas('restaurantProfile', function($query) {
+            $query->where('user_id', $this->id);
+        });
     }
 
     public function isAdmin()

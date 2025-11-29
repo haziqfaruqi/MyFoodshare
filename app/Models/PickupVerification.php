@@ -52,12 +52,12 @@ class PickupVerification extends Model
 
     public function recipient()
     {
-        return $this->belongsTo(User::class, 'recipient_id');
+        return $this->belongsTo(Recipient::class);
     }
 
     public function donor()
     {
-        return $this->belongsTo(User::class, 'donor_id');
+        return $this->belongsTo(RestaurantProfile::class, 'donor_id');
     }
 
     public static function generateForMatch(FoodMatch $match)
@@ -66,7 +66,7 @@ class PickupVerification extends Model
             'food_match_id' => $match->id,
             'food_listing_id' => $match->food_listing_id,
             'recipient_id' => $match->recipient_id,
-            'donor_id' => $match->foodListing->user_id,
+            'donor_id' => $match->foodListing->restaurantProfile->id,
             'verification_code' => self::generateUniqueCode(),
             'verification_status' => 'pending',
         ]);

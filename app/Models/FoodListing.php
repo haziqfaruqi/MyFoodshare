@@ -44,14 +44,14 @@ class FoodListing extends Model
         'qr_code_data' => 'json',
     ];
 
-    public function user()
+    public function restaurantProfile()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(RestaurantProfile::class);
     }
 
-    public function donor()
+    public function creator()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class, 'created_by');
     }
 
     public function matches()
@@ -101,7 +101,7 @@ class FoodListing extends Model
             'listing_id' => $this->id,
             'food_name' => $this->food_name,
             'quantity' => $this->quantity . ' ' . $this->unit,
-            'donor' => $this->user->name,
+            'donor' => $this->restaurantProfile->restaurant_name,
             'pickup_location' => $this->pickup_location,
             'pickup_address' => $this->pickup_address,
             'expiry_date' => $this->expiry_date->format('Y-m-d'),

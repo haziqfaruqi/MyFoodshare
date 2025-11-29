@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\FoodListing;
 use App\Models\FoodMatch;
 use App\Models\Recipient;
+use App\Models\RestaurantProfile;
 use App\Models\PickupVerification;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -16,10 +17,10 @@ class DashboardController extends Controller
     public function index()
     {
         $stats = [
-            'total_donors' => User::where('role', 'donor')->count(),
-            'total_recipients' => User::where('role', 'recipient')->count(),
-            'pending_approvals' => User::where('status', 'pending')->count(),
-            'active_listings' => FoodListing::where('status', 'active')->count(),
+            'total_donors' => RestaurantProfile::approved()->count(),
+            'total_recipients' => Recipient::active()->count(),
+            'pending_approvals' => RestaurantProfile::pending()->count() + User::where('status', 'pending')->where('role', 'recipient')->count(),
+            'active_listings' => FoodListing::where('status', 'active')->where('approval_status', 'approved')->count(),
             'total_matches' => FoodMatch::count(),
         ];
 
@@ -67,14 +68,14 @@ class DashboardController extends Controller
         $activity = [];
 
         // Get recent food listings
-        $recentListings = FoodListing::with('user')
+        $recentListings = FoodListing::with('restaurantProfile')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
         foreach ($recentListings as $listing) {
             $activity[] = [
-                'user' => $listing->user->name,
+                'user' => $listing->restaurantProfile->restaurant_name,
                 'action' => "Listed {$listing->food_name}",
                 'time' => $listing->created_at->diffForHumans(),
                 'timestamp' => $listing->created_at->timestamp,
@@ -83,14 +84,14 @@ class DashboardController extends Controller
         }
 
         // Get recent matches
-        $recentMatches = FoodMatch::with(['foodListing.user', 'recipient'])
+        $recentMatches = FoodMatch::with(['foodListing.restaurantProfile', 'recipient.user'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
         foreach ($recentMatches as $match) {
             $activity[] = [
-                'user' => $match->foodListing->user->name,
+                'user' => $match->foodListing->restaurantProfile->restaurant_name,
                 'action' => "Match with {$match->recipient->organization_name}",
                 'time' => $match->created_at->diffForHumans(),
                 'timestamp' => $match->created_at->timestamp,
@@ -99,15 +100,15 @@ class DashboardController extends Controller
         }
 
         // Get recent pickup verifications
-        $recentPickups = PickupVerification::with(['donor', 'recipient'])
+        $recentPickups = PickupVerification::with(['donor.restaurantProfile', 'recipient.user'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
         foreach ($recentPickups as $pickup) {
             $activity[] = [
-                'user' => $pickup->recipient->name,
-                'action' => "Completed pickup verification from {$pickup->donor->name}",
+                'user' => $pickup->recipient->user->name,
+                'action' => "Completed pickup verification from {$pickup->donor->restaurant_name}",
                 'time' => $pickup->created_at->diffForHumans(),
                 'timestamp' => $pickup->created_at->timestamp,
                 'status' => 'success'

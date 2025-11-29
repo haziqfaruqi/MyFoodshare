@@ -49,7 +49,7 @@ Route::get('/pickup/verification/{verification}/details', [App\Http\Controllers\
 
 // Debug route (remove after testing)
 Route::get('/debug/listings', function() {
-    $listings = \App\Models\FoodListing::with('user')
+    $listings = \App\Models\FoodListing::with('restaurantProfile')
         ->where('approval_status', 'approved')
         ->where('status', 'active')
         ->where('expiry_date', '>=', now()->toDateString())
@@ -68,7 +68,7 @@ Route::get('/debug/listings', function() {
                 'approval_status' => $listing->approval_status,
                 'expiry_date' => $listing->expiry_date,
                 'has_coordinates' => !is_null($listing->latitude) && !is_null($listing->longitude),
-                'donor_status' => $listing->user->status ?? 'unknown',
+                'donor_status' => $listing->restaurantProfile->status ?? 'unknown',
                 'created_at' => $listing->created_at
             ];
         }),

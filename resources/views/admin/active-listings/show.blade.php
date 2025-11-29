@@ -172,7 +172,7 @@
                                         <div class="min-w-0 flex-1">
                                             <div>
                                                 <p class="text-sm text-gray-500">
-                                                    Listing created by <span class="font-medium text-gray-900">{{ $listing->donor->name }}</span>
+                                                    Listing created by <span class="font-medium text-gray-900">{{ $listing->restaurantProfile->restaurant_name }}</span>
                                                 </p>
                                                 <p class="text-xs text-gray-400">{{ $listing->created_at->format('M d, Y H:i') }}</p>
                                             </div>
@@ -231,34 +231,35 @@
 
             <!-- Sidebar -->
             <div class="space-y-6">
-                <!-- Donor Information -->
+                <!-- Restaurant Information -->
                 <div class="bg-white rounded-lg shadow p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Donor Information</h3>
-                    
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Restaurant Information</h3>
+
                     <div class="space-y-3">
                         <div>
-                            <label class="block text-sm text-gray-600">Contact Person</label>
-                            <p class="font-medium">{{ $listing->donor->name }}</p>
+                            <label class="block text-sm text-gray-600">Restaurant Name</label>
+                            <p class="font-medium">{{ $listing->restaurantProfile->restaurant_name }}</p>
                         </div>
-                        
-                        @if($listing->donor->restaurant_name)
-                            <div>
-                                <label class="block text-sm text-gray-600">Restaurant</label>
-                                <p class="font-medium">{{ $listing->donor->restaurant_name }}</p>
-                            </div>
-                        @endif
-                        
+
                         <div>
-                            <label class="block text-sm text-gray-600">Email</label>
-                            <p class="text-sm">{{ $listing->donor->email }}</p>
+                            <label class="block text-sm text-gray-600">Cuisine Type</label>
+                            <p class="text-sm">{{ $listing->restaurantProfile->cuisine_type }}</p>
                         </div>
-                        
-                        @if($listing->donor->phone)
-                            <div>
-                                <label class="block text-sm text-gray-600">Phone</label>
-                                <p class="text-sm">{{ $listing->donor->phone }}</p>
-                            </div>
-                        @endif
+
+                        <div>
+                            <label class="block text-sm text-gray-600">Contact Email</label>
+                            <p class="text-sm">{{ $listing->restaurantProfile->user->email }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-600">Phone</label>
+                            <p class="text-sm">{{ $listing->restaurantProfile->user->phone ?? 'Not provided' }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm text-gray-600">Address</label>
+                            <p class="text-sm">{{ $listing->restaurantProfile->address }}</p>
+                        </div>
                     </div>
                 </div>
 

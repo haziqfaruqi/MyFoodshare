@@ -11,7 +11,7 @@ class ActiveListingController extends Controller
 {
     public function index()
     {
-        $activeListings = FoodListing::with(['donor'])
+        $activeListings = FoodListing::with(['restaurantProfile'])
             ->where('status', 'active')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
@@ -30,7 +30,7 @@ class ActiveListingController extends Controller
 
     public function show(FoodListing $listing)
     {
-        $listing->load(['donor', 'matches.recipient']);
+        $listing->load(['restaurantProfile', 'matches.recipient']);
         
         return view('admin.active-listings.show', compact('listing'));
     }

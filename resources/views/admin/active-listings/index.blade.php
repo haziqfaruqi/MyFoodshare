@@ -106,10 +106,7 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <div class="text-sm font-medium text-gray-900">{{ $listing->donor->name }}</div>
-                                        @if($listing->donor->restaurant_name)
-                                            <div class="text-sm text-gray-500">{{ $listing->donor->restaurant_name }}</div>
-                                        @endif
+                                        <div class="text-sm font-medium text-gray-900">{{ $listing->restaurantProfile->restaurant_name }}</div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                         {{ $listing->quantity }}
