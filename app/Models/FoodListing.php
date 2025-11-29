@@ -31,6 +31,8 @@ class FoodListing extends Model
         'approved_by',
         'admin_notes',
         'qr_code_data',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [
@@ -42,6 +44,8 @@ class FoodListing extends Model
         'longitude' => 'decimal:8',
         'approved_at' => 'datetime',
         'qr_code_data' => 'json',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     public function restaurantProfile()

@@ -20,6 +20,8 @@ class FoodMatch extends Model
         'recipient_id',
         'status',
         'distance',
+        'created_at',
+        'updated_at',
         'matched_at',
         'approved_at',
         'pickup_scheduled_at',
@@ -29,6 +31,8 @@ class FoodMatch extends Model
     ];
 
     protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         'matched_at' => 'datetime',
         'approved_at' => 'datetime',
         'pickup_scheduled_at' => 'datetime',

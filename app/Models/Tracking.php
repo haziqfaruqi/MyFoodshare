@@ -15,6 +15,8 @@ class Tracking extends Model
         'notes',
         'location_data',
         'status_changed_at',
+        'created_at',
+        'updated_at',
     ];
 
     protected function casts(): array
@@ -22,6 +24,8 @@ class Tracking extends Model
         return [
             'location_data' => 'array',
             'status_changed_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
     }
 

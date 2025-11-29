@@ -41,7 +41,9 @@ class UserController extends Controller
             'total_listings' => $user->foodListings()->count(),
             'active_listings' => $user->foodListings()->where('status', 'active')->count(),
             'completed_matches' => \App\Models\FoodMatch::whereHas('foodListing', function($query) use ($user) {
-                $query->where('user_id', $user->id);
+                $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
+                    $profileQuery->where('user_id', $user->id);
+                });
             })->where('status', 'completed')->count(),
         ];
 

@@ -23,12 +23,16 @@ class RestaurantProfile extends Model
         'admin_notes',
         'approved_at',
         'approved_by',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'approved_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**

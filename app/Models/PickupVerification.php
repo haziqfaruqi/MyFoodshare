@@ -18,6 +18,8 @@ class PickupVerification extends Model
         'verification_code',
         'qr_code_scanned',
         'scanned_at',
+        'created_at',
+        'updated_at',
         'pickup_details',
         'verification_status',
         'recipient_notes',
@@ -32,6 +34,8 @@ class PickupVerification extends Model
     ];
 
     protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
         'pickup_details' => 'array',
         'location_data' => 'array',
         'photo_evidence' => 'array',

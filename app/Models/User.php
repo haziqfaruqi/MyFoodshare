@@ -21,13 +21,13 @@ class User extends Authenticatable
         'latitude',
         'longitude',
         'description',
-        
+
         // Donor (Restaurant) specific fields
         'restaurant_name',
         'business_license',
         'cuisine_type',
         'restaurant_capacity',
-        
+
         // Recipient (NGO) specific fields
         'organization_name',
         'contact_person',
@@ -35,7 +35,7 @@ class User extends Authenticatable
         'dietary_requirements',
         'recipient_capacity',
         'needs_preferences',
-        
+
         'status',
         'admin_notes',
         'approved_at',
@@ -43,6 +43,8 @@ class User extends Authenticatable
         'fcm_token',
         'push_notifications_enabled',
         'notification_preferences',
+        'created_at',
+        'updated_at',
     ];
 
     protected $hidden = [
@@ -57,6 +59,8 @@ class User extends Authenticatable
             'password' => 'hashed',
             'dietary_requirements' => 'array',
             'approved_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
             'latitude' => 'decimal:8',
             'longitude' => 'decimal:8',
             'notification_preferences' => 'json',

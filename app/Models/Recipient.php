@@ -19,12 +19,16 @@ class Recipient extends Model
         'rating',
         'status',
         'needs_preferences',
+        'created_at',
+        'updated_at',
     ];
 
     protected $casts = [
         'rating' => 'decimal:1',
         'dietary_requirements' => 'array',
         'needs_preferences' => 'array',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     /**
