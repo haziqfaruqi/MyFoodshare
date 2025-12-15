@@ -3,7 +3,7 @@
         'name' => 'myfoodshare/laravel-app',
         'pretty_version' => 'dev-main',
         'version' => 'dev-main',
-        'reference' => '10c43098137c195a0d6a2dc53e8659ee8d4534df',
+        'reference' => '351f4e2925e522a56070d2a19e1554481cf45609',
         'type' => 'project',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -532,7 +532,7 @@
         'myfoodshare/laravel-app' => array(
             'pretty_version' => 'dev-main',
             'version' => 'dev-main',
-            'reference' => '10c43098137c195a0d6a2dc53e8659ee8d4534df',
+            'reference' => '351f4e2925e522a56070d2a19e1554481cf45609',
             'type' => 'project',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
@@ -784,8 +784,8 @@
         'psr/log-implementation' => array(
             'dev_requirement' => false,
             'provided' => array(
-                0 => '1.0|2.0|3.0',
-                1 => '3.0.0',
+                0 => '3.0.0',
+                1 => '1.0|2.0|3.0',
             ),
         ),
         'psr/simple-cache' => array(

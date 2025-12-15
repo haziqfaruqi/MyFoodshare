@@ -7,7 +7,12 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'App\\Channels\\FcmChannel' => $baseDir . '/app/Channels/FcmChannel.php',
+    'App\\Console\\Commands\\BackfillActivityLogs' => $baseDir . '/app/Console/Commands/BackfillActivityLogs.php',
     'App\\Console\\Kernel' => $baseDir . '/app/Console/Kernel.php',
+    'App\\Events\\MatchStatusUpdated' => $baseDir . '/app/Events/MatchStatusUpdated.php',
+    'App\\Events\\NewNotification' => $baseDir . '/app/Events/NewNotification.php',
+    'App\\Events\\PickupCompleted' => $baseDir . '/app/Events/PickupCompleted.php',
+    'App\\Events\\QrCodeScanned' => $baseDir . '/app/Events/QrCodeScanned.php',
     'App\\Exceptions\\Handler' => $baseDir . '/app/Exceptions/Handler.php',
     'App\\Http\\Controllers\\Admin\\ActiveListingController' => $baseDir . '/app/Http/Controllers/Admin/ActiveListingController.php',
     'App\\Http\\Controllers\\Admin\\AnalyticsController' => $baseDir . '/app/Http/Controllers/Admin/AnalyticsController.php',
@@ -22,6 +27,7 @@ return array(
     'App\\Http\\Controllers\\NotificationController' => $baseDir . '/app/Http/Controllers/NotificationController.php',
     'App\\Http\\Controllers\\PickupVerificationController' => $baseDir . '/app/Http/Controllers/PickupVerificationController.php',
     'App\\Http\\Controllers\\PublicController' => $baseDir . '/app/Http/Controllers/PublicController.php',
+    'App\\Http\\Controllers\\QrCodeController' => $baseDir . '/app/Http/Controllers/QrCodeController.php',
     'App\\Http\\Controllers\\QrVerificationController' => $baseDir . '/app/Http/Controllers/QrVerificationController.php',
     'App\\Http\\Controllers\\Recipient\\DashboardController' => $baseDir . '/app/Http/Controllers/Recipient/DashboardController.php',
     'App\\Http\\Controllers\\Recipient\\FoodBrowsingController' => $baseDir . '/app/Http/Controllers/Recipient/FoodBrowsingController.php',
@@ -52,6 +58,7 @@ return array(
     'App\\Notifications\\NewFoodMatchNotification' => $baseDir . '/app/Notifications/NewFoodMatchNotification.php',
     'App\\Notifications\\PickupCompletedNotification' => $baseDir . '/app/Notifications/PickupCompletedNotification.php',
     'App\\Notifications\\PickupConfirmedNotification' => $baseDir . '/app/Notifications/PickupConfirmedNotification.php',
+    'App\\Notifications\\PickupScheduledNotification' => $baseDir . '/app/Notifications/PickupScheduledNotification.php',
     'App\\Notifications\\PickupVerifiedNotification' => $baseDir . '/app/Notifications/PickupVerifiedNotification.php',
     'App\\Policies\\FoodListingPolicy' => $baseDir . '/app/Policies/FoodListingPolicy.php',
     'App\\Providers\\AppServiceProvider' => $baseDir . '/app/Providers/AppServiceProvider.php',

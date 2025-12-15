@@ -319,13 +319,13 @@ class ComposerStaticInit9fc0c1c24196562b176d4002e04097b3
         ),
         'Spatie\\LaravelIgnition\\' => 
         array (
-            0 => __DIR__ . '/..' . '/spatie/laravel-ignition/src',
-            1 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/laravel-ignition',
+            0 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/laravel-ignition',
+            1 => __DIR__ . '/..' . '/spatie/laravel-ignition/src',
         ),
         'Spatie\\Ignition\\' => 
         array (
-            0 => __DIR__ . '/..' . '/spatie/ignition/src',
-            1 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/ignition',
+            0 => __DIR__ . '/..' . '/spatie/error-solutions/legacy/ignition',
+            1 => __DIR__ . '/..' . '/spatie/ignition/src',
         ),
         'Spatie\\FlareClient\\' => 
         array (
@@ -557,7 +557,12 @@ class ComposerStaticInit9fc0c1c24196562b176d4002e04097b3
 
     public static $classMap = array (
         'App\\Channels\\FcmChannel' => __DIR__ . '/../..' . '/app/Channels/FcmChannel.php',
+        'App\\Console\\Commands\\BackfillActivityLogs' => __DIR__ . '/../..' . '/app/Console/Commands/BackfillActivityLogs.php',
         'App\\Console\\Kernel' => __DIR__ . '/../..' . '/app/Console/Kernel.php',
+        'App\\Events\\MatchStatusUpdated' => __DIR__ . '/../..' . '/app/Events/MatchStatusUpdated.php',
+        'App\\Events\\NewNotification' => __DIR__ . '/../..' . '/app/Events/NewNotification.php',
+        'App\\Events\\PickupCompleted' => __DIR__ . '/../..' . '/app/Events/PickupCompleted.php',
+        'App\\Events\\QrCodeScanned' => __DIR__ . '/../..' . '/app/Events/QrCodeScanned.php',
         'App\\Exceptions\\Handler' => __DIR__ . '/../..' . '/app/Exceptions/Handler.php',
         'App\\Http\\Controllers\\Admin\\ActiveListingController' => __DIR__ . '/../..' . '/app/Http/Controllers/Admin/ActiveListingController.php',
         'App\\Http\\Controllers\\Admin\\AnalyticsController' => __DIR__ . '/../..' . '/app/Http/Controllers/Admin/AnalyticsController.php',
@@ -572,6 +577,7 @@ class ComposerStaticInit9fc0c1c24196562b176d4002e04097b3
         'App\\Http\\Controllers\\NotificationController' => __DIR__ . '/../..' . '/app/Http/Controllers/NotificationController.php',
         'App\\Http\\Controllers\\PickupVerificationController' => __DIR__ . '/../..' . '/app/Http/Controllers/PickupVerificationController.php',
         'App\\Http\\Controllers\\PublicController' => __DIR__ . '/../..' . '/app/Http/Controllers/PublicController.php',
+        'App\\Http\\Controllers\\QrCodeController' => __DIR__ . '/../..' . '/app/Http/Controllers/QrCodeController.php',
         'App\\Http\\Controllers\\QrVerificationController' => __DIR__ . '/../..' . '/app/Http/Controllers/QrVerificationController.php',
         'App\\Http\\Controllers\\Recipient\\DashboardController' => __DIR__ . '/../..' . '/app/Http/Controllers/Recipient/DashboardController.php',
         'App\\Http\\Controllers\\Recipient\\FoodBrowsingController' => __DIR__ . '/../..' . '/app/Http/Controllers/Recipient/FoodBrowsingController.php',
@@ -602,6 +608,7 @@ class ComposerStaticInit9fc0c1c24196562b176d4002e04097b3
         'App\\Notifications\\NewFoodMatchNotification' => __DIR__ . '/../..' . '/app/Notifications/NewFoodMatchNotification.php',
         'App\\Notifications\\PickupCompletedNotification' => __DIR__ . '/../..' . '/app/Notifications/PickupCompletedNotification.php',
         'App\\Notifications\\PickupConfirmedNotification' => __DIR__ . '/../..' . '/app/Notifications/PickupConfirmedNotification.php',
+        'App\\Notifications\\PickupScheduledNotification' => __DIR__ . '/../..' . '/app/Notifications/PickupScheduledNotification.php',
         'App\\Notifications\\PickupVerifiedNotification' => __DIR__ . '/../..' . '/app/Notifications/PickupVerifiedNotification.php',
         'App\\Policies\\FoodListingPolicy' => __DIR__ . '/../..' . '/app/Policies/FoodListingPolicy.php',
         'App\\Providers\\AppServiceProvider' => __DIR__ . '/../..' . '/app/Providers/AppServiceProvider.php',
