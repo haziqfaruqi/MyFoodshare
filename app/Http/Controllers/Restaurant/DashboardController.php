@@ -158,14 +158,14 @@ class DashboardController extends Controller
         $progressData = [
             'active' => collect(),
             'completed' => collect(),
-            'expired' => $donations->where('food_listings.status', 'expired'),
+            'expired' => $donations->where('status', 'expired'),
         ];
-        
+
         // Categorize donations based on their match status
-        foreach ($donations->whereNotIn('food_listings.status', ['expired']) as $donation) {
+        foreach ($donations->whereNotIn('status', ['expired']) as $donation) {
             $hasCompletedMatches = $donation->matches->where('status', 'completed')->count() > 0;
             
-            if ($donation->food_listings->status === 'completed' || $hasCompletedMatches) {
+            if ($donation->status === 'completed' || $hasCompletedMatches) {
                 $progressData['completed']->push($donation);
             } else {
                 $progressData['active']->push($donation);

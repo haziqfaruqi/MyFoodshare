@@ -52,21 +52,18 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'dietary_requirements' => 'array',
-            'approved_at' => 'datetime',
-            'created_at' => 'datetime',
-            'updated_at' => 'datetime',
-            'latitude' => 'decimal:8',
-            'longitude' => 'decimal:8',
-            'notification_preferences' => 'json',
-            'push_notifications_enabled' => 'boolean',
-        ];
-    }
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+        'password' => 'hashed',
+        'dietary_requirements' => 'array',
+        'approved_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
+        'notification_preferences' => 'json',
+        'push_notifications_enabled' => 'boolean',
+    ];
 
     public function restaurantProfile()
     {
