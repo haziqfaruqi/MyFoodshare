@@ -152,6 +152,10 @@
                                 @php
                                     $dietaryOptions = ['Halal', 'Vegetarian', 'Vegan', 'Kosher', 'Gluten-Free', 'Nut-Free', 'Dairy-Free', 'Low-Sodium', 'Diabetic-Friendly'];
                                     $oldDietaryInfo = old('dietary_requirements', []);
+                                    // Ensure $oldDietaryInfo is always an array
+                                    if (!is_array($oldDietaryInfo)) {
+                                        $oldDietaryInfo = [];
+                                    }
                                 @endphp
                                 @foreach($dietaryOptions as $option)
                                     <label class="flex items-center">

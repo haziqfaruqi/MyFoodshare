@@ -17,7 +17,10 @@
       "Bash(npm install:*)",
       "Bash(cat:*)",
       "Bash(del:*)",
-      "Bash(kill:*)"
+      "Bash(kill:*)",
+      "Bash(pkill:*)",
+      "Bash(find:*)",
+      "Bash(user_id /c/laragon/www/MyFoodshare/app/ /c/laragon/www/MyFoodshare/resources/views/)"
     ],
     "deny": [],
     "ask": []

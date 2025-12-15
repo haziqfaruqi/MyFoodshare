@@ -100,15 +100,16 @@ class DashboardController extends Controller
         }
 
         // Get recent pickup verifications
-        $recentPickups = PickupVerification::with(['donor.restaurantProfile', 'recipient.user'])
+        $recentPickups = PickupVerification::with(['foodListing.restaurantProfile', 'foodListing.creator', 'recipient.user'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get();
 
         foreach ($recentPickups as $pickup) {
+            $restaurantName = $pickup->foodListing->restaurantProfile ? $pickup->foodListing->restaurantProfile->restaurant_name : $pickup->foodListing->creator->name;
             $activity[] = [
                 'user' => $pickup->recipient->user->name,
-                'action' => "Completed pickup verification from {$pickup->donor->restaurant_name}",
+                'action' => "Completed pickup verification from {$restaurantName}",
                 'time' => $pickup->created_at->diffForHumans(),
                 'timestamp' => $pickup->created_at->timestamp,
                 'status' => 'success'

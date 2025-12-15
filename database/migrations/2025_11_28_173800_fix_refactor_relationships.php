@@ -32,9 +32,13 @@ return new class extends Migration
         // Fix matches table relationships
         if (Schema::hasTable('matches')) {
             Schema::table('matches', function (Blueprint $table) {
-                // Ensure proper foreign keys
-                $table->foreign('food_listing_id')->references('id')->on('food_listings')->onDelete('cascade');
-                $table->foreign('recipient_id')->references('id')->on('recipients')->onDelete('cascade');
+                // Only add foreign key if it doesn't already exist
+                if (!Schema::hasColumn('matches', 'food_listing_id')) {
+                    $table->foreignId('food_listing_id')->constrained()->onDelete('cascade');
+                }
+                if (!Schema::hasColumn('matches', 'recipient_id')) {
+                    $table->foreignId('recipient_id')->constrained()->onDelete('cascade');
+                }
             });
         }
 

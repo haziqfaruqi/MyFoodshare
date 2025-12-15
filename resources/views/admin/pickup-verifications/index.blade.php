@@ -204,7 +204,7 @@
                                             <svg class="h-3 w-3 mr-1 text-green-600" fill="currentColor" viewBox="0 0 20 20">
                                                 <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                             </svg>
-                                            {{ $verification->donor->name }}
+                                            {{ $verification->foodListing->restaurantProfile ? $verification->foodListing->restaurantProfile->restaurant_name : $verification->foodListing->creator->name }}
                                         </div>
                                         <div class="flex items-center text-gray-900">
                                             <svg class="h-3 w-3 mr-1 text-blue-600" fill="currentColor" viewBox="0 0 20 20">

@@ -11,7 +11,7 @@ class FoodListingMonitorController extends Controller
 {
     public function index(Request $request)
     {
-        $query = FoodListing::with(['user', 'matches']);
+        $query = FoodListing::with(['creator', 'matches']);
 
         // Filter by status
         if ($request->filled('status') && $request->status !== 'all') {
@@ -101,7 +101,7 @@ class FoodListingMonitorController extends Controller
     public function complianceReport(Request $request)
     {
         // Get listings that might have compliance issues
-        $suspiciousListings = FoodListing::with('user')
+        $suspiciousListings = FoodListing::with('creator')
             ->where('status', 'active')
             ->where(function($query) {
                 // Check for listings with very short expiry times (potential expired food)

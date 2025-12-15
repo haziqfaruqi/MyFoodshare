@@ -3,7 +3,7 @@
 @section('title', 'Edit Listing - MyFoodshare')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-8">
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-8">
@@ -259,6 +259,10 @@
                         @php
                             $dietaryOptions = ['Vegetarian', 'Vegan', 'Gluten-Free', 'Halal', 'Kosher', 'Nut-Free'];
                             $oldDietaryInfo = old('dietary_info', $listing->dietary_info ?? []);
+                            // Ensure $oldDietaryInfo is always an array
+                            if (!is_array($oldDietaryInfo)) {
+                                $oldDietaryInfo = [];
+                            }
                         @endphp
                         @foreach($dietaryOptions as $option)
                             <label class="flex items-center">

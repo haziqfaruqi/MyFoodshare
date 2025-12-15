@@ -24,12 +24,12 @@ class AnalyticsController extends Controller
             'total_users' => User::count(),
             'active_users' => User::where(function($query) {
                 $query->whereHas('foodListings', function($q) {
-                    $q->where('created_at', '>=', now()->subDays(30));
+                    $q->where('food_listings.created_at', '>=', now()->subDays(30));
                 })
                 ->orWhereHas('matches', function($q) {
-                    $q->where('created_at', '>=', now()->subDays(30));
+                    $q->where('matches.created_at', '>=', now()->subDays(30));
                 })
-                ->orWhere('created_at', '>=', now()->subDays(30));
+                ->orWhere('users.created_at', '>=', now()->subDays(30));
             })->count(),
             'total_listings' => FoodListing::count(),
             'total_matches' => FoodMatch::count(),
@@ -57,17 +57,17 @@ class AnalyticsController extends Controller
         $userStats = [
             'total_donors' => User::where('role', 'donor')->count(),
             'active_donors' => User::where('role', 'donor')->whereHas('foodListings', function($q) use ($startDate) {
-                $q->where('created_at', '>=', $startDate);
+                $q->where('food_listings.created_at', '>=', $startDate);
             })->count(),
             'total_recipients' => User::where('role', 'recipient')->count(),
             'active_recipients' => User::where('role', 'recipient')->whereHas('matches', function($q) use ($startDate) {
-                $q->where('created_at', '>=', $startDate);
+                $q->where('matches.created_at', '>=', $startDate);
             })->count(),
         ];
 
         // Category performance
         $categoryStats = FoodListing::select('category', DB::raw('count(*) as listings'))
-            ->where('created_at', '>=', $startDate)
+            ->where('food_listings.created_at', '>=', $startDate)
             ->groupBy('category')
             ->orderBy('listings', 'desc')
             ->get();
@@ -84,8 +84,8 @@ class AnalyticsController extends Controller
                 ->where('activity_logs.event', 'dispute_resolved')
                 ->where('created_at', '>=', $startDate)
                 ->count(),
-            'pending_approvals' => User::where('users.status', 'pending')->count(),
-            'rejected_users' => User::where('users.status', 'rejected')->count(),
+            'pending_approvals' => User::where('status', 'pending')->count(),
+            'rejected_users' => User::where('status', 'rejected')->count(),
         ];
 
         // Recent high-level activities
@@ -98,7 +98,7 @@ class AnalyticsController extends Controller
         // Compliance and performance metrics
         $complianceStats = [
             'avg_pickup_time' => $this->getAveragePickupTime(),
-            'expired_listings' => FoodListing::where('food_listings.status', 'expired')->count(),
+            'expired_listings' => FoodListing::where('status', 'expired')->count(),
             'quality_ratings_avg' => DB::table('pickup_verifications')
                 ->whereNotNull('quality_rating')
                 ->avg('quality_rating'),
@@ -152,20 +152,21 @@ class AnalyticsController extends Controller
 
     private function getRecentActivity()
     {
-        $recentListings = FoodListing::with('donor')
+        $recentListings = FoodListing::with('restaurantProfile')
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get()
             ->map(function ($listing) {
+                $restaurantName = $listing->restaurantProfile ? $listing->restaurantProfile->restaurant_name : $listing->creator->name;
                 return [
-                    'user' => $listing->donor->restaurant_name ?? $listing->donor->name,
+                    'user' => $restaurantName,
                     'action' => "Listed {$listing->quantity} {$listing->food_name}",
                     'time' => $listing->created_at->diffForHumans(),
                     'status' => 'success'
                 ];
             });
 
-        $recentMatches = FoodMatch::with(['listing.donor', 'recipient'])
+        $recentMatches = FoodMatch::with(['listing.restaurantProfile', 'recipient'])
             ->orderBy('created_at', 'desc')
             ->take(5)
             ->get()
@@ -189,7 +190,7 @@ class AnalyticsController extends Controller
         // Get users with coordinates
         $usersWithCoords = User::whereNotNull('latitude')
             ->whereNotNull('longitude')
-            ->where('users.status', 'active')
+            ->where('status', 'active')
             ->get();
 
         // Group users by regions based on GPS coordinates
@@ -210,7 +211,7 @@ class AnalyticsController extends Controller
             if ($user->role === 'donor') {
                 $regions[$regionName]['donors']++;
                 // Count listings for this donor in this region
-                $regions[$regionName]['listings'] += FoodListing::where('user_id', $user->id)->count();
+                $regions[$regionName]['listings'] += FoodListing::where('created_by', $user->id)->count();
             } elseif ($user->role === 'recipient') {
                 $regions[$regionName]['recipients']++;
             }
@@ -219,7 +220,7 @@ class AnalyticsController extends Controller
         // Get users without coordinates and group by address
         $usersWithoutCoords = User::whereNull('latitude')
             ->whereNotNull('address')
-            ->where('users.status', 'active')
+            ->where('status', 'active')
             ->get();
 
         foreach ($usersWithoutCoords as $user) {
@@ -236,7 +237,7 @@ class AnalyticsController extends Controller
             
             if ($user->role === 'donor') {
                 $regions[$regionName]['donors']++;
-                $regions[$regionName]['listings'] += FoodListing::where('user_id', $user->id)->count();
+                $regions[$regionName]['listings'] += FoodListing::where('created_by', $user->id)->count();
             } elseif ($user->role === 'recipient') {
                 $regions[$regionName]['recipients']++;
             }
@@ -350,7 +351,7 @@ class AnalyticsController extends Controller
     private function getAveragePickupTime()
     {
         // Calculate average time from listing creation to pickup completion
-        $completedMatches = FoodMatch::where('matches.status', 'completed')
+        $completedMatches = FoodMatch::where('status', 'completed')
             ->whereNotNull('completed_at')
             ->with('foodListing')
             ->get();

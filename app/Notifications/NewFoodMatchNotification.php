@@ -39,7 +39,7 @@ class NewFoodMatchNotification extends Notification
             return (new MailMessage)
                 ->subject('New Food Available Near You')
                 ->line("A new food listing is available near you: {$this->match->foodListing->food_name}")
-                ->line("Donor: {$this->match->foodListing->user->name}")
+                ->line("Donor: {$this->match->foodListing->creator->name}")
                 ->line("Distance: {$this->match->distance} km")
                 ->action('View Listing', route('recipient.browse.show', $this->match->foodListing))
                 ->line('Express your interest to claim this food donation.');
@@ -63,7 +63,7 @@ class NewFoodMatchNotification extends Notification
                 'type' => 'new_food_available',
                 'match_id' => $this->match->id,
                 'listing_id' => $this->match->food_listing_id,
-                'donor_name' => $this->match->foodListing->user->name,
+                'donor_name' => $this->match->foodListing->creator->name,
                 'food_name' => $this->match->foodListing->food_name,
                 'distance' => $this->match->distance,
                 'message' => "New food available: {$this->match->foodListing->food_name}",

@@ -39,12 +39,12 @@ class UserController extends Controller
     {
         $stats = [
             'total_listings' => $user->foodListings()->count(),
-            'active_listings' => $user->foodListings()->where('status', 'active')->count(),
+            'active_listings' => $user->foodListings()->where('food_listings.status', 'active')->count(),
             'completed_matches' => \App\Models\FoodMatch::whereHas('foodListing', function($query) use ($user) {
                 $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
                     $profileQuery->where('user_id', $user->id);
                 });
-            })->where('status', 'completed')->count(),
+            })->where('matches.status', 'completed')->count(),
         ];
 
         return view('admin.users.show', compact('user', 'stats'));

@@ -3,7 +3,7 @@
 @section('title', 'Restaurant Dashboard - MyFoodshare')
 
 @section('content')
-<div class="min-h-screen bg-gray-50 py-8">
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="mb-6 sm:mb-8 text-center sm:text-left">
@@ -16,7 +16,7 @@
         </div>
 
         <!-- Impact Metrics -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+        <div class="impact-metrics grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
             <div class="bg-white rounded-lg shadow p-4 sm:p-6">
                 <div class="text-center">
                     <svg class="h-8 w-8 mx-auto text-green-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,31 +105,9 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
             <!-- Main Content -->
             <div class="lg:col-span-2">
-                <!-- Stats Overview -->
-                <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
-                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-4">Overview</h2>
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                        <div class="text-center p-3 sm:p-4 bg-green-50 rounded-lg">
-                            <div class="text-lg sm:text-2xl font-bold text-green-600">{{ $stats['total_listings'] }}</div>
-                            <div class="text-xs sm:text-sm text-gray-600">Total Listings</div>
-                        </div>
-                        <div class="text-center p-3 sm:p-4 bg-blue-50 rounded-lg">
-                            <div class="text-lg sm:text-2xl font-bold text-blue-600">{{ $stats['active_listings'] }}</div>
-                            <div class="text-xs sm:text-sm text-gray-600">Active Listings</div>
-                        </div>
-                        <div class="text-center p-3 sm:p-4 bg-purple-50 rounded-lg">
-                            <div class="text-lg sm:text-2xl font-bold text-purple-600">{{ $stats['total_matches'] }}</div>
-                            <div class="text-xs sm:text-sm text-gray-600">Total Matches</div>
-                        </div>
-                        <div class="text-center p-3 sm:p-4 bg-orange-50 rounded-lg">
-                            <div class="text-lg sm:text-2xl font-bold text-orange-600">{{ $stats['completed_donations'] }}</div>
-                            <div class="text-xs sm:text-sm text-gray-600">Completed</div>
-                        </div>
-                    </div>
-                </div>
-
+                
                 <!-- Recent Listings -->
-                <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+                <div class="recent-listings bg-white rounded-lg shadow-lg p-4 sm:p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Recent Listings</h2>
                         <a href="{{ route('restaurant.listings.index') }}" class="text-green-600 hover:text-green-700 text-xs sm:text-sm font-medium">
@@ -139,38 +117,54 @@
                     <div class="space-y-4">
                         @forelse($recentListings as $listing)
                             <div class="border border-gray-200 rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
-                                <div class="space-y-2">
-                                    <div class="flex items-center justify-between">
-                                        <h3 class="font-medium text-gray-900 text-sm sm:text-base">{{ $listing->food_name }}</h3>
-                                        <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                            @if($listing->status === 'active') bg-green-100 text-green-800
-                                            @elseif($listing->status === 'matched') bg-blue-100 text-blue-800
-                                            @elseif($listing->status === 'picked_up') bg-gray-100 text-gray-800
-                                            @else bg-red-100 text-red-800
-                                            @endif">
-                                            {{ ucfirst(str_replace('_', ' ', $listing->status)) }}
-                                        </span>
+                                <div class="flex gap-4">
+                                    <!-- Food Thumbnail -->
+                                    <div class="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-lg overflow-hidden">
+                                        @if($listing->images && is_array($listing->images) && count($listing->images) > 0)
+                                            <img src="{{ asset('storage/' . $listing->images[0]) }}"
+                                                 alt="{{ $listing->food_name }}"
+                                                 class="w-full h-full object-cover"
+                                                 onerror="this.onerror=null; this.src='https://picsum.photos/seed/{{ $listing->id }}/64/64.jpg';">
+                                        @else
+                                            <img src="https://picsum.photos/seed/{{ $listing->id }}/64/64.jpg"
+                                                 alt="{{ $listing->food_name }}"
+                                                 class="w-full h-full object-cover">
+                                        @endif>
                                     </div>
-                                    <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-600">
-                                        <span class="flex items-center">
-                                            <svg class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
-                                            </svg>
-                                            {{ $listing->quantity }} {{ $listing->unit }}
-                                        </span>
-                                        <span class="flex items-center">
-                                            <svg class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            </svg>
-                                            <span class="truncate">{{ $listing->pickup_location }}</span>
-                                        </span>
-                                        <span class="flex items-center">
-                                            <svg class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                            </svg>
-                                            {{ $listing->expiry_date->format('M j') }}
-                                        </span>
+
+                                    <div class="flex-1 space-y-2 min-w-0">
+                                        <div class="flex items-center justify-between">
+                                            <h3 class="font-medium text-gray-900 text-sm sm:text-base truncate">{{ $listing->food_name }}</h3>
+                                            <span class="px-2 py-1 rounded-full text-xs font-medium
+                                                @if($listing->status === 'active') bg-green-100 text-green-800
+                                                @elseif($listing->status === 'matched') bg-blue-100 text-blue-800
+                                                @elseif($listing->status === 'picked_up') bg-gray-100 text-gray-800
+                                                @else bg-red-100 text-red-800
+                                                @endif">
+                                                {{ ucfirst(str_replace('_', ' ', $listing->status)) }}
+                                            </span>
+                                        </div>
+                                        <div class="flex flex-wrap gap-x-4 gap-y-1 text-xs sm:text-sm text-gray-600">
+                                            <span class="flex items-center">
+                                                <svg class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                                </svg>
+                                                {{ $listing->quantity }} {{ $listing->unit }}
+                                            </span>
+                                            <span class="flex items-center">
+                                                <svg class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                                </svg>
+                                                <span class="truncate">{{ $listing->pickup_location }}</span>
+                                            </span>
+                                            <span class="flex items-center">
+                                                <svg class="h-3 w-3 sm:h-4 sm:w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                </svg>
+                                                {{ $listing->expiry_date->format('M j') }}
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -188,7 +182,7 @@
             </div>
 
             <!-- Sidebar -->
-            <div class="space-y-6">
+            <div class="sidebar-sections space-y-6">
                 <!-- Pending Matches -->
                 <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
                     <div class="flex items-center justify-between mb-4">
@@ -439,6 +433,25 @@ async function updateDashboardStats() {
         console.error('Failed to update dashboard stats:', error);
     }
 }
+
+// Add smooth fade-in animation for page elements
+document.addEventListener('DOMContentLoaded', function() {
+    // Target all cards except the help section
+    const cards = document.querySelectorAll('.impact-metrics .bg-white, .impact-metrics .bg-green-600, .recent-listings .bg-white, .sidebar-sections .bg-white, .sidebar-sections .bg-gradient-to-br, .bg-white.rounded-lg.shadow-lg:not(.bg-gradient-to-br), .bg-white.rounded-xl.shadow-lg:not(.bg-gradient-to-br)');
+    // Add specific selectors for Quick Actions cards
+    const quickActionCards = document.querySelectorAll('.quick-actions > a');
+    cards.push(...quickActionCards);
+
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease-out';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
 
 // Add CSS animations
 const style = document.createElement('style');

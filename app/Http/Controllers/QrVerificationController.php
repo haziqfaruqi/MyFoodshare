@@ -11,7 +11,7 @@ class QrVerificationController extends Controller
 {
     public function verify(Request $request, $id, $code)
     {
-        $listing = FoodListing::with(['user', 'matches.recipient'])->findOrFail($id);
+        $listing = FoodListing::with(['creator', 'matches.recipient'])->findOrFail($id);
         
         if ($listing->getVerificationCode() !== $code) {
             abort(403, 'Invalid verification code');

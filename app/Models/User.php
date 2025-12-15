@@ -85,9 +85,7 @@ class User extends Authenticatable
 
     public function foodListings()
     {
-        return FoodListing::whereHas('restaurantProfile', function($query) {
-            $query->where('user_id', $this->id);
-        });
+        return $this->hasManyThrough(FoodListing::class, RestaurantProfile::class, 'user_id', 'id');
     }
 
     public function isAdmin()
@@ -122,11 +120,16 @@ class User extends Authenticatable
 
     public function isApproved()
     {
-        return in_array($this->status, ['active']);
+        return $this->status === 'active';
     }
 
     public function approvedBy()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function matches()
+    {
+        return $this->hasMany(FoodMatch::class, 'recipient_id');
     }
 }

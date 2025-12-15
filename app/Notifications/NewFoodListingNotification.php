@@ -33,12 +33,14 @@ class NewFoodListingNotification extends Notification implements ShouldQueue
 
     public function toDatabase(object $notifiable): array
     {
+        $restaurantName = $this->foodListing->restaurantProfile ? $this->foodListing->restaurantProfile->restaurant_name : $this->foodListing->creator->name;
+
         return [
             'type' => 'new_food_listing',
             'title' => 'New Food Available Near You!',
-            'message' => "{$this->foodListing->food_name} is available for pickup at {$this->foodListing->donor->restaurant_name ?? $this->foodListing->donor->name}",
+            'message' => "{$this->foodListing->food_name} is available for pickup at {$restaurantName}",
             'food_listing_id' => $this->foodListing->id,
-            'donor_name' => $this->foodListing->donor->restaurant_name ?? $this->foodListing->donor->name,
+            'donor_name' => $restaurantName,
             'food_name' => $this->foodListing->food_name,
             'quantity' => $this->foodListing->quantity . ' ' . $this->foodListing->unit,
             'expiry_date' => $this->foodListing->expiry_date->format('M d, Y'),
@@ -48,9 +50,11 @@ class NewFoodListingNotification extends Notification implements ShouldQueue
 
     public function toFcm(object $notifiable): array
     {
+        $restaurantName = $this->foodListing->restaurantProfile ? $this->foodListing->restaurantProfile->restaurant_name : $this->foodListing->creator->name;
+
         return [
             'title' => 'New Food Available Near You! 🍽️',
-            'body' => "{$this->foodListing->food_name} ({$this->foodListing->quantity} {$this->foodListing->unit}) from {$this->foodListing->donor->restaurant_name ?? $this->foodListing->donor->name}",
+            'body' => "{$this->foodListing->food_name} ({$this->foodListing->quantity} {$this->foodListing->unit}) from {$restaurantName}",
             'data' => [
                 'type' => 'new_food_listing',
                 'food_listing_id' => $this->foodListing->id,

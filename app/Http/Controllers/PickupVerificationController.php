@@ -19,7 +19,7 @@ class PickupVerificationController extends Controller
     public function verify($code)
     {
         $verification = PickupVerification::where('verification_code', $code)
-            ->with(['foodMatch', 'foodListing', 'recipient', 'donor'])
+            ->with(['foodMatch', 'foodListing.restaurantProfile', 'foodListing.creator', 'recipient'])
             ->first();
 
         if (!$verification) {
@@ -61,7 +61,8 @@ class PickupVerificationController extends Controller
 
         if ($success) {
             // Notify donor that pickup was verified
-            $verification->donor->notify(new PickupVerifiedNotification($verification));
+            $donor = $verification->foodListing->restaurantProfile ?? $verification->foodListing->creator;
+            $donor->notify(new PickupVerifiedNotification($verification));
             
             return response()->json([
                 'success' => true,
@@ -126,19 +127,21 @@ class PickupVerificationController extends Controller
     public function getVerificationDetails(PickupVerification $verification)
     {
         // Only allow recipient or donor to view details
-        if (!in_array(Auth::id(), [$verification->recipient_id, $verification->donor_id])) {
+        $donorId = $verification->foodListing->restaurantProfile ? $verification->foodListing->restaurantProfile->user_id : $verification->foodListing->created_by;
+        if (!in_array(Auth::id(), [$verification->recipient_id, $donorId])) {
             abort(403, 'Unauthorized action.');
         }
 
         return response()->json([
-            'verification' => $verification->load(['foodMatch', 'foodListing', 'recipient', 'donor']),
+            'verification' => $verification->load(['foodMatch', 'foodListing.restaurantProfile', 'foodListing.creator', 'recipient']),
         ]);
     }
 
     public function reportIssue(Request $request, PickupVerification $verification)
     {
         // Allow both recipient and donor to report issues
-        if (!in_array(Auth::id(), [$verification->recipient_id, $verification->donor_id])) {
+        $donorId = $verification->foodListing->restaurantProfile ? $verification->foodListing->restaurantProfile->user_id : $verification->foodListing->created_by;
+        if (!in_array(Auth::id(), [$verification->recipient_id, $donorId])) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -188,7 +191,7 @@ class PickupVerificationController extends Controller
         // Only admins can access this
         $this->middleware('admin');
         
-        $query = PickupVerification::with(['foodListing', 'recipient', 'donor']);
+        $query = PickupVerification::with(['foodListing.restaurantProfile', 'foodListing.creator', 'recipient']);
         
         // Filter by status
         if ($request->filled('status')) {
@@ -227,7 +230,7 @@ class PickupVerificationController extends Controller
         // Only admins can access this
         $this->middleware('admin');
         
-        $verification->load(['foodListing', 'recipient', 'donor', 'foodMatch']);
+        $verification->load(['foodListing.restaurantProfile', 'foodListing.creator', 'recipient', 'foodMatch']);
         
         return view('admin.pickup-verifications.show', compact('verification'));
     }

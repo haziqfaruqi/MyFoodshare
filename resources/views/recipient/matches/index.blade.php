@@ -105,9 +105,9 @@
                                         <!-- Donor Info -->
                                         <div>
                                             <p class="text-gray-500 mb-1">Donor</p>
-                                            <p class="font-medium text-gray-900">{{ $match->foodListing->user->name }}</p>
-                                            @if($match->foodListing->user->restaurant_name)
-                                                <p class="text-xs text-gray-500">{{ $match->foodListing->user->restaurant_name }}</p>
+                                            <p class="font-medium text-gray-900">{{ $match->foodListing->creator->name }}</p>
+                                            @if($match->foodListing->creator->restaurant_name)
+                                                <p class="text-xs text-gray-500">{{ $match->foodListing->creator->restaurant_name }}</p>
                                             @endif
                                         </div>
                                         

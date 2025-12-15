@@ -25,7 +25,14 @@ Broadcast::channel('restaurant.{userId}', function ($user, $userId) {
 // Private channels for pickup verification
 Broadcast::channel('pickup.{verificationId}', function ($user, $verificationId) {
     $verification = \App\Models\PickupVerification::find($verificationId);
-    return $verification && ($user->id === $verification->donor_id || $user->id === $verification->recipient_id);
+    if (!$verification) {
+        return false;
+    }
+
+    // Determine donor_id from food listing
+    $donorId = $verification->foodListing->restaurantProfile ? $verification->foodListing->restaurantProfile->user_id : $verification->foodListing->user_id;
+
+    return $user->id === $donorId || $user->id === $verification->recipient_id;
 });
 
 // Private admin dashboard channel

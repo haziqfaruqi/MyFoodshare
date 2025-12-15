@@ -75,7 +75,7 @@ class QrCodeController extends Controller
             'verification' => $verification,
             'foodListing' => $verification->foodListing,
             'recipient' => $verification->recipient,
-            'donor' => $verification->donor,
+            'donor' => $verification->foodListing->restaurantProfile ?? $verification->foodListing->creator,
         ]);
     }
 
@@ -121,8 +121,8 @@ class QrCodeController extends Controller
                     'dietary_info' => $verification->foodListing->dietary_info,
                 ],
                 'restaurant' => [
-                    'name' => $verification->donor->name,
-                    'contact' => $verification->donor->email,
+                    'name' => $verification->foodListing->restaurantProfile ? $verification->foodListing->restaurantProfile->restaurant_name : $verification->foodListing->creator->name,
+                    'contact' => $verification->foodListing->creator->email,
                 ]
             ]);
         } catch (\Exception $e) {
@@ -188,7 +188,7 @@ class QrCodeController extends Controller
     public function getVerificationStatus($code)
     {
         $verification = PickupVerification::where('verification_code', $code)
-            ->with(['foodListing', 'recipient', 'donor', 'foodMatch'])
+            ->with(['foodListing.restaurantProfile', 'foodListing.creator', 'recipient', 'foodMatch'])
             ->first();
 
         if (!$verification) {

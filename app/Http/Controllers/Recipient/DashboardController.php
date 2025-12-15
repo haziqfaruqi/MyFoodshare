@@ -29,7 +29,7 @@ class DashboardController extends Controller
             ->take(6);
         
         // Get user's matches
-        $myMatches = FoodMatch::with(['foodListing.user'])
+        $myMatches = FoodMatch::with(['foodListing.creator'])
             ->where('recipient_id', $user->id)
             ->latest()
             ->take(5)

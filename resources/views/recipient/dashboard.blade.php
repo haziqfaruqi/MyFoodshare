@@ -168,7 +168,7 @@
                                         </div>
                                         <div>
                                             <p class="font-medium text-gray-900">{{ $match->foodListing->food_name }}</p>
-                                            <p class="text-sm text-gray-600">{{ $match->foodListing->user->name }}</p>
+                                            <p class="text-sm text-gray-600">{{ $match->foodListing->creator->name }}</p>
                                             <p class="text-xs text-gray-500">{{ $match->created_at->diffForHumans() }}</p>
                                         </div>
                                     </div>

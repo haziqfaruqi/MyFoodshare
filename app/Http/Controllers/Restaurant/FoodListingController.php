@@ -14,7 +14,7 @@ class FoodListingController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Auth::user()->foodListings();
+        $query = Auth::user()->createdFoodListings();
 
         if ($request->filled('search')) {
             $query->where(function($q) use ($request) {
@@ -54,7 +54,7 @@ class FoodListingController extends Controller
             'pickup_location' => 'required|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
-            'pickup_address' => 'nullable|string|max:500',
+            'pickup_address' => 'nullable|string|max:2000',
             'special_instructions' => 'nullable|string',
             'dietary_info' => 'nullable|array',
             'images' => 'nullable|array|max:5',
@@ -85,7 +85,8 @@ class FoodListingController extends Controller
             ]);
         }
 
-        $listing = Auth::user()->foodListings()->create([
+        $listing = Auth::user()->createdFoodListings()->create([
+            'created_by' => Auth::id(),
             'food_name' => $request->food_name,
             'description' => $request->description,
             'category' => $request->category,
@@ -167,7 +168,7 @@ class FoodListingController extends Controller
             'pickup_location' => 'required|string|max:255',
             'latitude' => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
-            'pickup_address' => 'nullable|string|max:500',
+            'pickup_address' => 'nullable|string|max:2000',
             'special_instructions' => 'nullable|string',
             'dietary_info' => 'nullable|array',
             'images' => 'nullable|array|max:5',
@@ -308,7 +309,7 @@ class FoodListingController extends Controller
         
         // Get all matches for this restaurant's listings
         $query = FoodMatch::whereHas('foodListing', function($q) use ($user) {
-            $q->where('user_id', $user->id);
+            $q->where('created_by', $user->id);
         })->with(['foodListing', 'recipient', 'pickupVerification']);
 
         // Filter by status
@@ -334,22 +335,22 @@ class FoodListingController extends Controller
         // Get status counts for tabs
         $statusCounts = [
             'all' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
-                $q->where('user_id', $user->id);
+                $q->where('created_by', $user->id);
             })->count(),
             'pending' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
-                $q->where('user_id', $user->id);
+                $q->where('created_by', $user->id);
             })->where('status', 'pending')->count(),
             'approved' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
-                $q->where('user_id', $user->id);
+                $q->where('created_by', $user->id);
             })->where('status', 'approved')->count(),
             'scheduled' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
-                $q->where('user_id', $user->id);
+                $q->where('created_by', $user->id);
             })->where('status', 'scheduled')->count(),
             'completed' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
-                $q->where('user_id', $user->id);
+                $q->where('created_by', $user->id);
             })->where('status', 'completed')->count(),
             'rejected' => FoodMatch::whereHas('foodListing', function($q) use ($user) {
-                $q->where('user_id', $user->id);
+                $q->where('created_by', $user->id);
             })->where('status', 'rejected')->count(),
         ];
 

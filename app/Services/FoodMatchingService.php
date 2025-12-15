@@ -75,10 +75,10 @@ class FoodMatchingService
         $baseQuery = FoodListing::where('status', 'active')
             ->where('approval_status', 'approved')
             ->where('expiry_date', '>=', now()->toDateString())
-            ->whereHas('user', function ($query) {
+            ->whereHas('creator', function ($query) {
                 $query->where('status', 'active');
             })
-            ->with(['user', 'matches' => function ($query) use ($recipient) {
+            ->with(['creator', 'matches' => function ($query) use ($recipient) {
                 $query->where('recipient_id', $recipient->id);
             }]);
 

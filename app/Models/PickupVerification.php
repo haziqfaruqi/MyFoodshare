@@ -61,16 +61,25 @@ class PickupVerification extends Model
 
     public function donor()
     {
-        return $this->belongsTo(RestaurantProfile::class, 'donor_id');
+        // Get donor information through the food listing
+        $foodListing = $this->foodListing;
+        if ($foodListing && $foodListing->restaurantProfile) {
+            return $foodListing->restaurantProfile;
+        }
+        return $foodListing ? $foodListing->creator : null;
     }
 
     public static function generateForMatch(FoodMatch $match)
     {
+        // Determine donor_id based on whether the food listing has a restaurant profile
+        $foodListing = $match->foodListing;
+        $donorId = $foodListing->restaurantProfile ? $foodListing->restaurantProfile->user_id : $foodListing->created_by;
+
         return self::create([
             'food_match_id' => $match->id,
             'food_listing_id' => $match->food_listing_id,
             'recipient_id' => $match->recipient_id,
-            'donor_id' => $match->foodListing->restaurantProfile->id,
+            'donor_id' => $donorId,
             'verification_code' => self::generateUniqueCode(),
             'verification_status' => 'pending',
         ]);

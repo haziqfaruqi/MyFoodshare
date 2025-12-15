@@ -10,6 +10,7 @@ class FoodListing extends Model
     use HasFactory;
 
     protected $fillable = [
+        'created_by',
         'user_id',
         'food_name',
         'description',

@@ -13,7 +13,7 @@
             <h2 class="text-lg font-semibold text-blue-800 mb-2">{{ $foodListing->food_name }}</h2>
             <div class="text-sm text-blue-700 space-y-1">
                 <p><strong>Quantity:</strong> {{ $foodListing->quantity }} {{ $foodListing->unit }}</p>
-                <p><strong>Restaurant:</strong> {{ $donor->name }}</p>
+                <p><strong>Restaurant:</strong> {{ $donor->restaurant_name ?? $donor->name }}</p>
                 <p><strong>Pickup Location:</strong> {{ $foodListing->pickup_location }}</p>
                 @if($foodListing->pickup_address)
                     <p><strong>Address:</strong> {{ $foodListing->pickup_address }}</p>

@@ -133,7 +133,7 @@ class FoodBrowsingController extends Controller
     {
         $user = Auth::user();
         
-        $query = FoodMatch::with(['foodListing.user'])
+        $query = FoodMatch::with(['foodListing.creator'])
             ->where('recipient_id', $user->id);
             
         // Filter by status if provided

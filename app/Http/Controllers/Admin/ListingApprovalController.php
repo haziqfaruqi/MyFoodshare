@@ -18,7 +18,7 @@ class ListingApprovalController extends Controller
 
     public function index()
     {
-        $pendingListings = FoodListing::with(['donor'])
+        $pendingListings = FoodListing::with(['restaurantProfile', 'creator'])
             ->where('approval_status', 'pending')
             ->orderBy('created_at', 'desc')
             ->paginate(15);
@@ -37,8 +37,8 @@ class ListingApprovalController extends Controller
 
     public function show(FoodListing $listing)
     {
-        $listing->load(['donor', 'matches']);
-        
+        $listing->load(['restaurantProfile', 'creator', 'matches']);
+
         return view('admin.listing-approvals.show', compact('listing'));
     }
 

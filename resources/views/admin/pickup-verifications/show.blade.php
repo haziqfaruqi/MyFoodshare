@@ -91,14 +91,17 @@
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <h3 class="text-lg font-medium text-gray-900 mb-4">Participants</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        @if($verification->donor)
+                        @php
+    $donor = $verification->foodListing->restaurantProfile ?? $verification->foodListing->creator;
+@endphp
+@if($donor)
                         <div>
                             <h4 class="font-medium text-gray-900 mb-2">Donor (Restaurant)</h4>
                             <div class="space-y-2">
-                                <p class="text-sm"><strong>Name:</strong> {{ $verification->donor->name }}</p>
-                                <p class="text-sm"><strong>Restaurant:</strong> {{ $verification->donor->restaurant_name ?? 'N/A' }}</p>
-                                <p class="text-sm"><strong>Email:</strong> {{ $verification->donor->email }}</p>
-                                <p class="text-sm"><strong>Phone:</strong> {{ $verification->donor->phone }}</p>
+                                <p class="text-sm"><strong>Name:</strong> {{ $donor->name ?? $donor->restaurant_name }}</p>
+                                <p class="text-sm"><strong>Restaurant:</strong> {{ $donor->restaurant_name ?? 'N/A' }}</p>
+                                <p class="text-sm"><strong>Email:</strong> {{ $donor->email }}</p>
+                                <p class="text-sm"><strong>Phone:</strong> {{ $donor->phone ?? 'N/A' }}</p>
                             </div>
                         </div>
                         @endif

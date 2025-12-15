@@ -18,8 +18,8 @@ class DashboardController extends Controller
         
         // Basic stats
         $stats = [
-            'total_listings' => $user->foodListings()->count(),
-            'active_listings' => $user->foodListings()->where('status', 'active')->count(),
+            'total_listings' => $user->createdFoodListings()->count(),
+            'active_listings' => $user->createdFoodListings()->where('food_listings.status', 'active')->count(),
             'total_matches' => FoodMatch::whereHas('foodListing', function($query) use ($user) {
                 $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
                     $profileQuery->where('user_id', $user->id);
@@ -29,7 +29,7 @@ class DashboardController extends Controller
                 $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
                     $profileQuery->where('user_id', $user->id);
                 });
-            })->where('status', 'completed')->count(),
+            })->where('matches.status', 'completed')->count(),
         ];
 
         // Impact metrics from activity logs
@@ -60,7 +60,7 @@ class DashboardController extends Controller
             ->take(10)
             ->get();
 
-        $recentListings = $user->foodListings()
+        $recentListings = $user->createdFoodListings()
             ->latest()
             ->take(5)
             ->get();
@@ -69,10 +69,10 @@ class DashboardController extends Controller
             $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
                 $profileQuery->where('user_id', $user->id);
             });
-        })->where('status', 'pending')->with(['recipient', 'foodListing'])->get();
+        })->where('matches.status', 'pending')->with(['recipient', 'foodListing'])->get();
 
         // Category breakdown
-        $categoryStats = $user->foodListings()
+        $categoryStats = $user->createdFoodListings()
             ->select('category', DB::raw('count(*) as count'))
             ->groupBy('category')
             ->get()
@@ -115,13 +115,13 @@ class DashboardController extends Controller
 
         // Detailed statistics
         $detailedStats = [
-            'total_listings' => $user->foodListings()->count(),
-            'active_listings' => $user->foodListings()->where('status', 'active')->count(),
+            'total_listings' => $user->createdFoodListings()->count(),
+            'active_listings' => $user->createdFoodListings()->where('food_listings.status', 'active')->count(),
             'completed_donations' => FoodMatch::whereHas('foodListing', function($query) use ($user) {
                 $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
                     $profileQuery->where('user_id', $user->id);
                 });
-            })->where('status', 'completed')->count(),
+            })->where('matches.status', 'completed')->count(),
             'total_matches' => FoodMatch::whereHas('foodListing', function($query) use ($user) {
                 $query->whereHas('restaurantProfile', function($profileQuery) use ($user) {
                     $profileQuery->where('user_id', $user->id);
@@ -130,7 +130,7 @@ class DashboardController extends Controller
         ];
 
         // Category breakdown
-        $categoryStats = $user->foodListings()
+        $categoryStats = $user->createdFoodListings()
             ->select('category', DB::raw('count(*) as count'))
             ->groupBy('category')
             ->get()
@@ -149,7 +149,7 @@ class DashboardController extends Controller
         $user = Auth::user();
         
         // Get all food listings with their matches and progress
-        $donations = $user->foodListings()
+        $donations = $user->createdFoodListings()
             ->with(['matches.recipient', 'matches.pickupVerification'])
             ->orderBy('created_at', 'desc')
             ->get();
@@ -158,14 +158,14 @@ class DashboardController extends Controller
         $progressData = [
             'active' => collect(),
             'completed' => collect(),
-            'expired' => $donations->where('status', 'expired'),
+            'expired' => $donations->where('food_listings.status', 'expired'),
         ];
         
         // Categorize donations based on their match status
-        foreach ($donations->whereNotIn('status', ['expired']) as $donation) {
+        foreach ($donations->whereNotIn('food_listings.status', ['expired']) as $donation) {
             $hasCompletedMatches = $donation->matches->where('status', 'completed')->count() > 0;
             
-            if ($donation->status === 'completed' || $hasCompletedMatches) {
+            if ($donation->food_listings->status === 'completed' || $hasCompletedMatches) {
                 $progressData['completed']->push($donation);
             } else {
                 $progressData['active']->push($donation);

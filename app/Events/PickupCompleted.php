@@ -33,8 +33,9 @@ class PickupCompleted implements ShouldBroadcast
      */
     public function broadcastOn(): array
     {
+        $donorId = $this->verification->foodListing->restaurantProfile ? $this->verification->foodListing->restaurantProfile->user_id : $this->verification->foodListing->created_by;
         return [
-            new PrivateChannel('restaurant.' . $this->verification->donor_id),
+            new PrivateChannel('restaurant.' . $donorId),
             new PrivateChannel('admin.dashboard'),
             new PrivateChannel('pickup.' . $this->verification->id),
         ];
@@ -59,8 +60,8 @@ class PickupCompleted implements ShouldBroadcast
                 'email' => $this->recipient->email,
             ],
             'restaurant' => [
-                'id' => $this->verification->donor->id,
-                'name' => $this->verification->donor->name,
+                'id' => $this->verification->foodListing->restaurantProfile ? $this->verification->foodListing->restaurantProfile->user_id : $this->verification->foodListing->created_by,
+                'name' => $this->verification->foodListing->restaurantProfile ? $this->verification->foodListing->restaurantProfile->restaurant_name : $this->verification->foodListing->creator->name,
             ],
             'completed_at' => $this->verification->pickup_completed_at->toISOString(),
             'quality_rating' => $this->verification->quality_rating,

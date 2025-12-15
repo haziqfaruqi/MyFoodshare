@@ -57,7 +57,7 @@ class FoodMatch extends Model
 
     public function restaurantProfile()
     {
-        return $this->belongsTo(RestaurantProfile::class, 'food_listing_id');
+        return $this->hasOneThrough(RestaurantProfile::class, FoodListing::class, 'id', 'user_id', 'food_listing_id');
     }
 
     public function tracking()
@@ -124,7 +124,7 @@ class FoodMatch extends Model
         ]);
 
         // Notify donor about completed pickup
-        $this->foodListing->user->notify(new PickupCompletedNotification($this));
+        $this->foodListing->creator->notify(new PickupCompletedNotification($this));
 
         // Update food listing status if this was the last active match
         $activeMaches = FoodMatch::where('food_listing_id', $this->food_listing_id)
