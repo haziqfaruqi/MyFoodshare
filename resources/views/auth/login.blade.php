@@ -119,8 +119,8 @@
                 </div>
                 <div class="mt-4 text-sm text-gray-600 bg-gray-50 p-3 rounded-md">
                     <p><strong>Admin:</strong> admin@myfoodshare.com / admin123</p>
-                    <p><strong>Restaurant Owner:</strong> owner@goldenspoon.com / owner123</p>
-                    <p><strong>Pizza Corner:</strong> owner@pizzacorner.com / pizza123</p>
+                    <p><strong>Restaurant Owner:</strong> donor@goldenspoon.com / donor123</p>
+                    <p><strong>Pizza Corner:</strong> donor@pizzacorner.com / pizza123</p>
                     <p><strong>Hope Foundation:</strong> recipient@hopefoundation.org / hope123</p>
                 </div>
             </div>
