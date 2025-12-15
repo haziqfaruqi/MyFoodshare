@@ -49,3 +49,12 @@ storage/logs/*
 !ERD_MyFoodshare.md
 !ERD_ACTUAL_SYSTEM.md
 !USE_CASE_DETAILS.md
+
+# Laravel
+vendor/
+bootstrap/
+storage/framework/cache/data/*
+storage/logs/*
+*.env
+.env.backup
+.phpunit.result.cache
