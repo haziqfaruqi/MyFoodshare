@@ -20,7 +20,7 @@
             <!-- Main Content -->
             <div class="lg:col-span-2">
                 <!-- Food Images -->
-                @if($listing->images && count($listing->images) > 0)
+                @if($listing->images && is_array($listing->images) && count($listing->images) > 0)
                     <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-6">
                             @foreach($listing->images as $image)
@@ -68,7 +68,7 @@
                     @endif
                     
                     <!-- Dietary Information -->
-                    @if($listing->dietary_info && count($listing->dietary_info) > 0)
+                    @if($listing->dietary_info && is_array($listing->dietary_info) && count($listing->dietary_info) > 0)
                         <div class="mb-6">
                             <h3 class="text-lg font-semibold text-gray-900 mb-3">Dietary Information</h3>
                             <div class="flex flex-wrap gap-2">

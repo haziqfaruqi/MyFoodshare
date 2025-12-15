@@ -129,7 +129,7 @@
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
                                         @php
-                                            $restaurantName = $listing->restaurantProfile ? $listing->restaurantProfile->restaurant_name : $listing->creator->name;
+                                            $restaurantName = $listing->restaurantProfile ? $listing->restaurantProfile->restaurant_name : $listing->creator->name ?? 'Unknown Donor';
                                         @endphp
                                         <div class="text-sm font-medium text-gray-900">{{ $restaurantName }}</div>
                                         @if($listing->restaurantProfile)

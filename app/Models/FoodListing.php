@@ -39,12 +39,12 @@ class FoodListing extends Model
     protected $casts = [
         'expiry_date' => 'date',
         'expiry_time' => 'datetime:H:i',
-        'dietary_info' => 'json',
-        'images' => 'json',
+        'dietary_info' => 'array',
+        'images' => 'array',
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'approved_at' => 'datetime',
-        'qr_code_data' => 'json',
+        'qr_code_data' => 'array',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -102,11 +102,13 @@ class FoodListing extends Model
 
     public function generateQrCode()
     {
+        $restaurantName = $this->restaurantProfile ? $this->restaurantProfile->restaurant_name : $this->creator->name ?? 'Unknown Donor';
+
         $data = [
             'listing_id' => $this->id,
             'food_name' => $this->food_name,
             'quantity' => $this->quantity . ' ' . $this->unit,
-            'donor' => $this->restaurantProfile->restaurant_name,
+            'donor' => $restaurantName,
             'pickup_location' => $this->pickup_location,
             'pickup_address' => $this->pickup_address,
             'expiry_date' => $this->expiry_date->format('Y-m-d'),

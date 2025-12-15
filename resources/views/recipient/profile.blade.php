@@ -140,7 +140,9 @@
                             <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                                 <div class="min-w-0 flex-1">
                                     <p class="font-medium text-gray-900 truncate">{{ $match->foodListing->food_name }}</p>
-                                    <p class="text-sm text-gray-600">{{ $match->foodListing->restaurantProfile->restaurant_name }}</p>
+                                    <p class="text-sm text-gray-600">
+    {{ $match->foodListing->restaurantProfile ? $match->foodListing->restaurantProfile->restaurant_name : $match->foodListing->creator->name ?? 'Unknown Donor' }}
+</p>
                                 </div>
                                 <div class="text-sm text-gray-500">
                                     {{ $match->created_at->diffForHumans() }}

@@ -3,6 +3,13 @@
 @section('title', 'Restaurant Profile - MyFoodshare')
 
 @section('content')
+@php
+    $user = auth()->user();
+    if (!$user->restaurantProfile) {
+        // Redirect to create restaurant profile if none exists
+        return redirect()->route('restaurant.profile.create');
+    }
+@endphp
 <div class="min-h-screen bg-gray-50 py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Header -->

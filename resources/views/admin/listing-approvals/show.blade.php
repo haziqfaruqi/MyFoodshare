@@ -130,33 +130,47 @@
                     <div class="space-y-3">
                         <div>
                             <label class="block text-sm text-gray-600">Restaurant Name</label>
-                            <p class="font-medium">{{ $listing->restaurantProfile->restaurant_name }}</p>
+                            <p class="font-medium">
+                                @if($listing->restaurantProfile)
+                                    {{ $listing->restaurantProfile->restaurant_name }}
+                                @else
+                                    {{ $listing->creator->name ?? 'Unknown Donor' }}
+                                @endif
+                            </p>
                         </div>
 
                         <div>
                             <label class="block text-sm text-gray-600">Cuisine Type</label>
-                            <p class="text-sm">{{ $listing->restaurantProfile->cuisine_type }}</p>
+                            <p class="text-sm">
+                                @if($listing->restaurantProfile)
+                                    {{ $listing->restaurantProfile->cuisine_type }}
+                                @else
+                                    Not specified
+                                @endif
+                            </p>
                         </div>
 
                         <div>
                             <label class="block text-sm text-gray-600">Contact Email</label>
-                            <p class="text-sm">{{ $listing->restaurantProfile->user->email }}</p>
+                            <p class="text-sm">{{ $listing->creator->email }}</p>
                         </div>
 
                         <div>
                             <label class="block text-sm text-gray-600">Phone</label>
-                            <p class="text-sm">{{ $listing->restaurantProfile->user->phone ?? 'Not provided' }}</p>
+                            <p class="text-sm">{{ $listing->creator->phone ?? 'Not provided' }}</p>
                         </div>
 
-                        <div>
-                            <label class="block text-sm text-gray-600">Account Status</label>
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                @if($listing->restaurantProfile->status === 'approved') bg-green-100 text-green-800
-                                @elseif($listing->restaurantProfile->status === 'pending') bg-yellow-100 text-yellow-800
-                                @else bg-red-100 text-red-800 @endif">
-                                {{ ucfirst($listing->restaurantProfile->status) }}
-                            </span>
-                        </div>
+                        @if($listing->restaurantProfile)
+                            <div>
+                                <label class="block text-sm text-gray-600">Account Status</label>
+                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
+                                    @if($listing->restaurantProfile->status === 'approved') bg-green-100 text-green-800
+                                    @elseif($listing->restaurantProfile->status === 'pending') bg-yellow-100 text-yellow-800
+                                    @else bg-red-100 text-red-800 @endif">
+                                    {{ ucfirst($listing->restaurantProfile->status) }}
+                                </span>
+                            </div>
+                        @endif
                     </div>
                 </div>
 

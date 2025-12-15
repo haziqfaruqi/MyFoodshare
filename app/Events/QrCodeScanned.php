@@ -60,7 +60,7 @@ class QrCodeScanned implements ShouldBroadcast
             ],
             'restaurant' => [
                 'id' => $this->verification->foodListing->restaurantProfile ? $this->verification->foodListing->restaurantProfile->user_id : $this->verification->foodListing->created_by,
-                'name' => $this->verification->foodListing->restaurantProfile ? $this->verification->foodListing->restaurantProfile->restaurant_name : $this->verification->foodListing->creator->name,
+                'name' => $this->verification->foodListing->restaurantProfile ? $this->verification->foodListing->restaurantProfile->restaurant_name : $this->verification->foodListing->creator->name ?? 'Unknown Donor',
             ],
             'scanned_at' => $this->verification->scanned_at->toISOString(),
             'status' => 'qr_scanned',

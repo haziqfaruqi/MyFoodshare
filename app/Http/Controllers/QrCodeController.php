@@ -121,7 +121,7 @@ class QrCodeController extends Controller
                     'dietary_info' => $verification->foodListing->dietary_info,
                 ],
                 'restaurant' => [
-                    'name' => $verification->foodListing->restaurantProfile ? $verification->foodListing->restaurantProfile->restaurant_name : $verification->foodListing->creator->name,
+                    'name' => $verification->foodListing->restaurantProfile ? $verification->foodListing->restaurantProfile->restaurant_name : $verification->foodListing->creator->name ?? 'Unknown Donor',
                     'contact' => $verification->foodListing->creator->email,
                 ]
             ]);

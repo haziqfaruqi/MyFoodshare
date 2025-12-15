@@ -65,7 +65,7 @@
                         </div>
                         @endif
 
-                        @if($listing->dietary_info && count($listing->dietary_info) > 0)
+                        @if($listing->dietary_info && is_array($listing->dietary_info) && count($listing->dietary_info) > 0)
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Dietary Information</label>
                             <div class="flex flex-wrap gap-2">

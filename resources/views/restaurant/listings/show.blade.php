@@ -42,7 +42,7 @@
             <!-- Main Content -->
             <div class="lg:col-span-2 space-y-6">
                 <!-- Images -->
-                @if($listing->images && count($listing->images) > 0)
+                @if($listing->images && is_array($listing->images) && count($listing->images) > 0)
                     <div class="bg-white rounded-lg shadow p-6">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4">Images</h2>
                         <div class="grid grid-cols-2 gap-4">
@@ -122,7 +122,7 @@
                 </div>
 
                 <!-- Dietary Information -->
-                @if($listing->dietary_info && count($listing->dietary_info) > 0)
+                @if($listing->dietary_info && is_array($listing->dietary_info) && count($listing->dietary_info) > 0)
                     <div class="bg-white rounded-lg shadow p-6">
                         <h2 class="text-xl font-semibold text-gray-900 mb-4">Dietary Information</h2>
                         <div class="flex flex-wrap gap-2">

@@ -76,7 +76,7 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                 @foreach($listings as $listing)
                     <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                        @if($listing->images && count($listing->images) > 0)
+                        @if($listing->images && is_array($listing->images) && count($listing->images) > 0)
                             <div class="h-48 bg-gray-200">
                                 <img src="{{ asset('storage/' . $listing->images[0]) }}" 
                                      alt="{{ $listing->food_name }}" 

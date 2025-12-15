@@ -210,7 +210,7 @@
                 <div>
                     <h2 class="text-xl font-semibold text-gray-900 mb-4">Food Images</h2>
                     <div class="space-y-4">
-                        @if($listing->images && count($listing->images) > 0)
+                        @if($listing->images && is_array($listing->images) && count($listing->images) > 0)
                             <div>
                                 <h3 class="text-sm font-medium text-gray-700 mb-2">Current Images</h3>
                                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">

@@ -12,6 +12,15 @@ dist
 dist-ssr
 *.local
 
+# Laravel
+vendor/
+bootstrap/
+storage/framework/cache/data/*
+storage/logs/*
+*.env
+.env.backup
+.phpunit.result.cache
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

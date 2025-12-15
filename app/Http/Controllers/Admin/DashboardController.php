@@ -74,8 +74,10 @@ class DashboardController extends Controller
             ->get();
 
         foreach ($recentListings as $listing) {
+            $restaurantName = $listing->restaurantProfile ? $listing->restaurantProfile->restaurant_name : $listing->creator->name ?? 'Unknown Donor';
+
             $activity[] = [
-                'user' => $listing->restaurantProfile->restaurant_name,
+                'user' => $restaurantName,
                 'action' => "Listed {$listing->food_name}",
                 'time' => $listing->created_at->diffForHumans(),
                 'timestamp' => $listing->created_at->timestamp,
@@ -90,8 +92,10 @@ class DashboardController extends Controller
             ->get();
 
         foreach ($recentMatches as $match) {
+            $restaurantName = $match->foodListing->restaurantProfile ? $match->foodListing->restaurantProfile->restaurant_name : $match->foodListing->creator->name ?? 'Unknown Donor';
+
             $activity[] = [
-                'user' => $match->foodListing->restaurantProfile->restaurant_name,
+                'user' => $restaurantName,
                 'action' => "Match with {$match->recipient->organization_name}",
                 'time' => $match->created_at->diffForHumans(),
                 'timestamp' => $match->created_at->timestamp,
@@ -106,7 +110,7 @@ class DashboardController extends Controller
             ->get();
 
         foreach ($recentPickups as $pickup) {
-            $restaurantName = $pickup->foodListing->restaurantProfile ? $pickup->foodListing->restaurantProfile->restaurant_name : $pickup->foodListing->creator->name;
+            $restaurantName = $pickup->foodListing->restaurantProfile ? $pickup->foodListing->restaurantProfile->restaurant_name : $pickup->foodListing->creator->name ?? 'Unknown Donor';
             $activity[] = [
                 'user' => $pickup->recipient->user->name,
                 'action' => "Completed pickup verification from {$restaurantName}",

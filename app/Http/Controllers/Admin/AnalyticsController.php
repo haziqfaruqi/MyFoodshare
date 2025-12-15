@@ -157,7 +157,7 @@ class AnalyticsController extends Controller
             ->take(5)
             ->get()
             ->map(function ($listing) {
-                $restaurantName = $listing->restaurantProfile ? $listing->restaurantProfile->restaurant_name : $listing->creator->name;
+                $restaurantName = $listing->restaurantProfile ? $listing->restaurantProfile->restaurant_name : $listing->creator->name ?? 'Unknown Donor';
                 return [
                     'user' => $restaurantName,
                     'action' => "Listed {$listing->quantity} {$listing->food_name}",

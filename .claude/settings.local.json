@@ -20,7 +20,8 @@
       "Bash(kill:*)",
       "Bash(pkill:*)",
       "Bash(find:*)",
-      "Bash(user_id /c/laragon/www/MyFoodshare/app/ /c/laragon/www/MyFoodshare/resources/views/)"
+      "Bash(user_id /c/laragon/www/MyFoodshare/app/ /c/laragon/www/MyFoodshare/resources/views/)",
+      "Bash(mysql:*)"
     ],
     "deny": [],
     "ask": []

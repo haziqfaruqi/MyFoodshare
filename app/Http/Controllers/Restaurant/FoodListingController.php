@@ -69,10 +69,30 @@ class FoodListingController extends Controller
             }
         }
 
+        // Try to get or create restaurant profile for this user
+        $restaurantProfile = Auth::user()->restaurantProfile()->first();
+        if (!$restaurantProfile) {
+            // Create restaurant profile if it doesn't exist
+            $restaurantProfile = Auth::user()->restaurantProfile()->create([
+                'restaurant_name' => Auth::user()->restaurant_name ?? Auth::user()->name . "'s Restaurant",
+                'address' => Auth::user()->address ?? '',
+                'latitude' => Auth::user()->latitude,
+                'longitude' => Auth::user()->longitude,
+                'description' => Auth::user()->description ?? '',
+                'business_license' => Auth::user()->business_license ?? null,
+                'cuisine_type' => Auth::user()->cuisine_type ?? 'general',
+                'restaurant_capacity' => Auth::user()->restaurant_capacity ?? 50,
+                'status' => Auth::user()->status ?? 'active',
+            ]);
+        }
+
+        // Get restaurant profile ID, allow NULL if profile can't be created or found
+        $validProfileId = $restaurantProfile?->id;
+
         // Use coordinates from request, or fall back to user's coordinates
         $latitude = $request->latitude ?? Auth::user()->latitude;
         $longitude = $request->longitude ?? Auth::user()->longitude;
-        
+
         // If still no coordinates, try to use a default based on pickup address
         if (!$latitude || !$longitude) {
             // Log that coordinates are missing so we can fix this
@@ -85,8 +105,9 @@ class FoodListingController extends Controller
             ]);
         }
 
-        $listing = Auth::user()->createdFoodListings()->create([
+        $listing = FoodListing::create([
             'created_by' => Auth::id(),
+            'restaurant_profile_id' => $validProfileId,
             'food_name' => $request->food_name,
             'description' => $request->description,
             'category' => $request->category,

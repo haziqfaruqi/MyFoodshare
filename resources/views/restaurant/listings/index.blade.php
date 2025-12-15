@@ -84,7 +84,7 @@
             @forelse($listings as $listing)
                 <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
                     <div class="relative">
-                        @if($listing->images && count($listing->images) > 0)
+                        @if($listing->images && is_array($listing->images) && count($listing->images) > 0)
                             <img src="{{ asset('storage/' . $listing->images[0]) }}" 
                                  alt="{{ $listing->food_name }}" 
                                  class="w-full h-48 object-cover">

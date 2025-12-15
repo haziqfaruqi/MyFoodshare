@@ -172,7 +172,7 @@
                                         <div class="min-w-0 flex-1">
                                             <div>
                                                 <p class="text-sm text-gray-500">
-                                                    Listing created by <span class="font-medium text-gray-900">{{ $listing->restaurantProfile->restaurant_name }}</span>
+                                                    Listing created by <span class="font-medium text-gray-900">{{ $listing->restaurantProfile ? $listing->restaurantProfile->restaurant_name : $listing->creator->name ?? 'Unknown Donor' }}</span>
                                                 </p>
                                                 <p class="text-xs text-gray-400">{{ $listing->created_at->format('M d, Y H:i') }}</p>
                                             </div>
@@ -238,27 +238,45 @@
                     <div class="space-y-3">
                         <div>
                             <label class="block text-sm text-gray-600">Restaurant Name</label>
-                            <p class="font-medium">{{ $listing->restaurantProfile->restaurant_name }}</p>
+                            <p class="font-medium">
+                                @if($listing->restaurantProfile)
+                                    {{ $listing->restaurantProfile->restaurant_name }}
+                                @else
+                                    {{ $listing->creator->name ?? 'Unknown Donor' }}
+                                @endif
+                            </p>
                         </div>
 
                         <div>
                             <label class="block text-sm text-gray-600">Cuisine Type</label>
-                            <p class="text-sm">{{ $listing->restaurantProfile->cuisine_type }}</p>
+                            <p class="text-sm">
+                                @if($listing->restaurantProfile)
+                                    {{ $listing->restaurantProfile->cuisine_type }}
+                                @else
+                                    Not specified
+                                @endif
+                            </p>
                         </div>
 
                         <div>
                             <label class="block text-sm text-gray-600">Contact Email</label>
-                            <p class="text-sm">{{ $listing->restaurantProfile->user->email }}</p>
+                            <p class="text-sm">{{ $listing->creator->email }}</p>
                         </div>
 
                         <div>
                             <label class="block text-sm text-gray-600">Phone</label>
-                            <p class="text-sm">{{ $listing->restaurantProfile->user->phone ?? 'Not provided' }}</p>
+                            <p class="text-sm">{{ $listing->creator->phone ?? 'Not provided' }}</p>
                         </div>
 
                         <div>
                             <label class="block text-sm text-gray-600">Address</label>
-                            <p class="text-sm">{{ $listing->restaurantProfile->address }}</p>
+                            <p class="text-sm">
+                                @if($listing->restaurantProfile)
+                                    {{ $listing->restaurantProfile->address }}
+                                @else
+                                    {{ $listing->pickup_address ?? 'Not specified' }}
+                                @endif
+                            </p>
                         </div>
                     </div>
                 </div>
